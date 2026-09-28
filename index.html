@@ -2,167 +2,748 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Facturación / Pedidos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Generador de Facturas Local</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f4f4f9;
-            color: #333;
+            background-color: #f3f4f6;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 2rem;
         }
-        .container {
-            max-width: 600px;
-            background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            margin: auto;
-        }
-        .logo-container {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        /* Estilo para asegurar que la imagen no rompa el diseño */
-        .logo-container img {
-            max-width: 150px;
-            height: auto;
-        }
-        .form-group {
-            position: relative;
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        input[type="text"] {
-            width: 100%;
-            padding: 10px;
-            box-sizing: border-box;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        /* Contenedor de sugerencias desplegables */
-        #suggestions-list {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: #fff;
-            border: 1px solid #ccc;
-            border-top: none;
-            z-index: 1000;
-            max-height: 150px;
-            overflow-y: auto;
-            border-radius: 0 0 4px 4px;
-            display: none;
-        }
-        .suggestion-item {
-            padding: 10px;
-            cursor: pointer;
-            border-bottom: 1px solid #eee;
-        }
-        .suggestion-item:hover {
-            background-color: #f0f0f0;
-        }
-
-        /* Estilos específicos para impresión */
-        @media print {
+        @media (max-width: 767px) {
             body {
-                background: none;
-                color: #000;
+                padding: 0.25rem;
+                background-color: #ffffff;
             }
             .container {
-                box-shadow: none;
-                margin: 0;
-                width: 100%;
-                max-width: 100%;
+                padding: 0.75rem 0.25rem !important;
+                box-shadow: none !important;
             }
-            /* Si la imagen da problemas al imprimir, puedes ocultarla descomentando la línea de abajo */
-            /* img { display: none !important; } */
+        }
+        .container {
+            max-width: 900px;
+            width: 100%;
+        }
+        .shadow-custom {
+            box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 10px -2px rgba(0, 0, 0, 0.05);
+        }
+        .table-input {
+            width: 100%;
+            padding: 0px 4px !important;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.25rem;
+            font-size: 13px !important;
+            height: 22px !important;
+            line-height: 22px !important;
+        }
+        .table-input:focus {
+            border-color: #3b82f6;
+            outline: none;
+        }
+        input.description-input {
+            width: 100%;
+            border: 1px solid #d1d5db;
+            padding: 0px 4px !important;
+            border-radius: 0.25rem;
+            font-size: 13px !important;
+            height: 22px !important;
+            line-height: 22px !important;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .image-column { width: 6%; }
+        .description-column { width: 44%; }
+        .quantity-column { width: 10%; }
+        .price-column { width: 15%; }
+        .total-column { width: 15%; }
+        .actions-column { width: 10%; }
+        
+        .table-input.quantity, .table-input.price {
+             text-align: right;
+        }
+        #print-footer { display: none; }
+
+        @media print {
+            @page { margin: 0; }
+            body {
+                background-color: #ffffff !important;
+                padding: 10mm 12mm 12mm 12mm !important;
+                margin: 0 !important;
+                display: block !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            .container {
+                box-shadow: none !important;
+                padding: 0 !important;
+                max-width: 100% !important;
+                width: 100% !important;
+            }
+            footer, button, section:has(#orderList), #clientSelectContainer, .actions-column, th:last-child, td:last-child, h1, #history-section, .product-thumb {
+                display: none !important;
+            }
+            #print-header-company {
+                display: block !important;
+                font-size: 1.3rem !important;
+                font-weight: 800 !important;
+                color: #000000 !important;
+                line-height: 1.0 !important;
+            }
+            #print-header-subinfo {
+                display: block !important;
+                font-size: 0.8rem !important;
+                color: #4b5563 !important; 
+                margin-top: 0.15rem !important;
+            }
+            #emisor-block { display: none !important; }
+            #client-block {
+                background: transparent !important;
+                padding: 0 !important;
+                margin-top: 0.3rem !important;
+            }
+            #clientName {
+                font-size: 0.9rem !important;
+                font-weight: bold !important;
+                color: #374151 !important; 
+                margin: 0 !important;
+                padding: 0 !important;
+                line-height: 1.1 !important;
+                display: block !important;
+            }
+            #clientAddress {
+                font-size: 0.85rem !important;
+                color: #4b5563 !important; 
+                margin: 0 !important;
+                padding: 0 !important;
+                line-height: 1.1 !important;
+                display: block !important;
+            }
+            input {
+                border: none !important;
+                outline: none !important;
+                background: transparent !important;
+                padding: 0 !important;
+                box-shadow: none !important;
+                font-size: 13px !important;
+                color: #4b5563 !important;  
+                height: 20px !important;
+                line-height: 20px !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+            }
+            #invoiceDate {
+                text-align: right !important;
+                color: #4b5563 !important;
+            }
+            input[type="date"]::-webkit-calendar-picker-indicator { display: none !important; }
+            .hidden.md\:block { display: block !important; }
+            #cards-container { display: none !important; }
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+                margin-top: 0.6rem !important;
+            }
+            th {
+                padding: 2px 4px !important;
+                font-size: 11px !important;
+                font-weight: bold !important;
+                height: 20px !important;
+                line-height: 20px !important;
+                background-color: #f3f4f6 !important;
+                color: #000000 !important;
+                border-bottom: 1px solid #4b5563 !important;
+            }
+            tr { height: 20px !important; }
+            td {
+                padding: 0px 4px !important;
+                border-bottom: 1px solid #e5e7eb !important;
+                height: 20px !important;
+                line-height: 20px !important;
+                vertical-align: middle !important;
+            }
+            .total-item {
+                font-size: 13px !important;
+                font-weight: normal !important; 
+                color: #4b5563 !important;
+            }
+            #totals-box {
+                background: transparent !important;
+                box-shadow: none !important;
+                padding: 0.4rem 0 0 0 !important;
+                color: #4b5563 !important;
+            }
+            #totals-box span { color: #4b5563 !important; }
+            #total, #totals-box .pt-1 span:first-child {
+                color: #000000 !important;
+                font-weight: bold !important;
+            }
+            #print-footer {
+                display: block !important;
+                position: fixed;
+                bottom: 6mm;
+                left: 0;
+                right: 0;
+                text-align: center;
+                font-size: 0.6rem !important;
+                color: #9ca3af !important; 
+                letter-spacing: 0.2em;
+                text-transform: uppercase;
+                font-family: monospace;
+            }
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <!-- Imagen / Logo (Asegúrate de colocar un enlace válido en src o dejarlo listo) -->
-    <div class="logo-container">
-        <img src="https://via.placeholder.com/150" alt="Logo de la Empresa" id="print-logo">
-    </div>
+    <div class="container bg-white shadow-custom rounded-xl p-8">
+        <header class="mb-4 border-b pb-3 flex justify-between items-start">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-extrabold text-blue-600 print:hidden">Generador de Facturas</h1>
+                <div id="print-header-company" class="hidden">JM.ELECTRONICA & ACCESORIOS</div>
+                <div id="print-header-subinfo" class="hidden">Tel: 3571-536378 | RIO TERCERO.CBA.</div>
+            </div>
+            
+            <div class="flex flex-col items-end space-y-1">
+                <div class="flex items-center justify-end w-full">
+                    <span class="text-gray-500 font-bold text-sm md:text-base print:text-gray-600 mr-1.5 select-none">N°</span>
+                    <input type="text" id="invoiceNumber" value="001" class="text-xl md:text-2xl font-bold text-gray-800 border-b-2 border-dashed border-gray-300 w-12 text-right print:w-12" title="Número de Factura" oninput="saveInvoiceNumber()">
+                </div>
+                <div class="flex items-center justify-end w-full">
+                    <span class="text-xs md:text-sm text-gray-500 print:text-gray-600 mr-1.5 select-none">Fecha:</span>
+                    <input type="date" id="invoiceDate" class="text-xs border-none bg-gray-50 rounded p-1 text-right print:bg-transparent print:p-0" style="text-align: right; width: 90px;">
+                </div>
+            </div>
+        </header>
 
-    <h2>Búsqueda de Productos</h2>
-    
-    <div class="form-group">
-        <label for="product-search">Escribe el nombre del producto:</label>
-        <input type="text" id="product-search" placeholder="Ej. Camisa, Pantalón..." autocomplete="off">
-        <div id="suggestions-list"></div>
-    </div>
-</div>
+        <section class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+            <div id="emisor-block" class="bg-gray-50 p-3 rounded-lg md:bg-transparent md:p-0">
+                <h2 class="text-sm font-bold uppercase tracking-wider text-gray-600 mb-1">Información del Emisor</h2>
+                <input type="text" id="companyName" placeholder="Tu Nombre o Empresa" class="w-full p-2 border rounded-md mb-1.5 text-sm font-semibold" value="JM.ELECTRONICA & ACCESORIOS">
+                <textarea id="companyInfo" placeholder="Dirección, Teléfono" rows="2" class="w-full p-2 border rounded-md text-sm">Tel: 3571-536378&#10;RIO TERCERO.CBA.</textarea>
+            </div>
+            
+            <div id="client-block" class="bg-gray-50 p-3 rounded-lg md:bg-transparent md:p-0">
+                <h2 class="text-sm font-bold uppercase tracking-wider text-gray-600 mb-1 print:hidden">Información del Cliente</h2>
+                <div id="clientSelectContainer" class="mb-1.5 hidden">
+                    <label for="clientSelect" class="text-xs text-gray-500 block">Clientes Guardados:</label>
+                    <select id="clientSelect" onchange="loadSelectedClient()" class="w-full p-1.5 border rounded-md text-sm">
+                        <option value="">-- Seleccionar cliente --</option>
+                    </select>
+                </div>
 
-<script>
-    // Tu JSON con los productos y precios
-    const productosJSON = [
-        { "id": 1, "nombre": "Camisa Casual de Algodón", "precio": 25.00 },
-        { "id": 2, "nombre": "Pantalón Jean Clásico", "precio": 40.00 },
-        { "id": 3, "nombre": "Zapatillas Deportivas", "precio": 65.50 },
-        { "id": 4, "nombre": "Gorra Ajustable", "precio": 15.00 },
-        { "id": 5, "nombre": "Campera / Chaqueta Impermeable", "precio": 85.00 }
-    ];
+                <input type="text" id="clientName" placeholder="Nombre del Cliente" class="w-full p-2 border rounded-md mb-1 text-sm font-semibold">
+                <input type="text" id="clientAddress" placeholder="Dirección del Cliente" class="w-full p-2 border rounded-md text-sm">
+                <button onclick="saveCurrentClient()" class="mt-2 w-full bg-green-100 text-green-700 py-1.5 rounded-md text-xs font-semibold hover:bg-green-200 transition duration-150 print:hidden">Guardar/Actualizar Cliente</button>
+            </div>
+        </section>
 
-    const searchInput = document.getElementById('product-search');
-    const suggestionsList = document.getElementById('suggestions-list');
+        <section class="mb-4 p-3 bg-gray-50 rounded-lg border print:hidden">
+            <h2 class="text-sm font-bold uppercase tracking-wider text-gray-600 mb-1">Cargar Pedido (WhatsApp)</h2>
+            <textarea id="orderList" placeholder="Pega aquí la lista de productos de WhatsApp..." rows="3" class="w-full p-2.5 border rounded-md text-sm resize-y"></textarea>
+            <div id="error-message" class="hidden mt-2 p-2 bg-red-100 text-red-700 border border-red-400 rounded-md text-xs"></div>
+            <button onclick="processOrderList()" class="mt-2 w-full bg-purple-600 text-white py-2 rounded-md hover:bg-purple-700 transition duration-150 font-semibold text-sm">
+                Procesar y Agregar Productos (Orden Alfabético)
+            </button>
+        </section>
 
-    // Evento para detectar cuando escribes
-    searchInput.addEventListener('input', function() {
-        const query = this.value.toLowerCase().trim();
+        <div class="mb-3">
+            <!-- Vista en Tarjetas para Celular -->
+            <div id="cards-container" class="block md:hidden divide-y divide-gray-200 border-t border-b border-gray-200 print:hidden"></div>
+
+            <!-- Vista en Tabla para Escritorio -->
+            <div class="hidden md:block overflow-x-auto rounded-lg shadow-md print:shadow-none">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-blue-50">
+                        <tr>
+                            <th class="px-2 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider image-column">Img</th>
+                            <th class="px-4 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider description-column">Descripción</th>
+                            <th class="px-4 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider quantity-column">Cant.</th>
+                            <th class="px-4 py-1 text-right text-xs font-medium text-gray-500 uppercase tracking-wider price-column">Precio Unit.</th>
+                            <th class="px-4 py-1 text-right text-xs font-medium text-gray-500 uppercase tracking-wider total-column">Total</th>
+                            <th class="px-4 py-1 text-right text-xs font-medium text-gray-500 uppercase tracking-wider actions-column print:hidden">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="line-items" class="bg-white divide-y divide-gray-200"></tbody>
+                </table>
+            </div>
+        </div>
         
-        // Limpiar lista si no hay texto
-        if (query.length === 0) {
-            suggestionsList.innerHTML = '';
-            suggestionsList.style.display = 'none';
-            return;
+        <div class="flex justify-end">
+            <div id="totals-box" class="w-full max-w-xs p-3 bg-gray-50 rounded-lg shadow-inner">
+                <div class="flex justify-between mb-1 text-xs">
+                    <span>Subtotal:</span>
+                    <span id="subtotal" class="font-semibold text-gray-900">0,00</span>
+                </div>
+                <div class="flex justify-between mb-1 items-center text-xs">
+                    <span>Impuesto (%):</span>
+                    <input type="number" id="tax-rate" value="21" min="0" oninput="calculateTotals()" class="w-14 p-0.5 border rounded text-right text-xs print:w-auto">
+                </div>
+                <div class="flex justify-between mb-1 text-xs">
+                    <span>Monto Impuesto:</span>
+                    <span id="tax-amount" class="font-semibold text-gray-900">0,00</span>
+                </div>
+                <div class="flex justify-between pt-1 border-t border-blue-200 print:border-gray-400">
+                    <span class="text-sm font-bold text-blue-600">Total:</span>
+                    <span id="total" class="text-sm font-bold text-blue-600">0,00</span>
+                </div>
+            </div>
+        </div>
+
+        <section id="history-section" class="mt-6 pt-4 border-t print:hidden">
+            <details class="bg-gray-50 p-3 rounded-lg border">
+                <summary class="text-xs font-bold text-gray-700 cursor-pointer uppercase tracking-wider">Historial de Facturas (Último Mes) y Compras por Cliente</summary>
+                <div class="mt-3 overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 text-xs">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="px-2 py-1 text-left font-medium text-gray-500">N°</th>
+                                <th class="px-2 py-1 text-left font-medium text-gray-500">Fecha</th>
+                                <th class="px-2 py-1 text-left font-medium text-gray-500">Cliente</th>
+                                <th class="px-2 py-1 text-right font-medium text-gray-500">Total</th>
+                                <th class="px-2 py-1 text-center font-medium text-gray-500">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="invoice-history-list" class="bg-white divide-y divide-gray-200">
+                            <tr><td colspan="5" class="px-2 py-2 text-center text-gray-400">No hay facturas guardadas recientemente.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </details>
+        </section>
+
+        <footer class="mt-6 pt-4 border-t flex flex-wrap justify-between gap-3 print:hidden">
+            <button onclick="addLineItem()" class="w-full md:w-auto px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-150 font-semibold shadow-md text-sm">
+                + Agregar Fila Manual
+            </button>
+            <div class="flex w-full md:w-auto gap-3 flex-wrap">
+                <button onclick="resetInvoice()" class="flex-1 md:flex-none px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition duration-150 font-semibold shadow-md text-sm">
+                    Restablecer
+                </button>
+                <button onclick="saveAndPrintInvoice()" class="flex-1 md:flex-none px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-150 font-semibold shadow-md text-sm">
+                    Guardar e Imprimir / PDF
+                </button>
+            </div>
+        </footer>
+
+        <div id="print-footer">APPSFOGEL</div>
+    </div>
+
+    <script>
+        let cachedGitHubProducts = [];
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            document.getElementById('invoiceDate').valueAsDate = new Date();
+            loadClientsFromLocalStorage();
+            loadInvoiceNumber(); 
+            await loadLocalProductsJson(); 
+            cleanAndLoadInvoiceHistory();
+            calculateTotals();
+            setupEnterKeyNavigation();
+        });
+
+        function saveInvoiceNumber() {
+             localStorage.setItem('invoiceNumber', document.getElementById('invoiceNumber').value);
         }
 
-        // Filtrar productos del JSON que coincidan con la búsqueda
-        const resultados = productosJSON.filter(item => 
-            item.nombre.toLowerCase().includes(query)
-        );
+        function loadInvoiceNumber() {
+            const savedNumber = localStorage.getItem('invoiceNumber');
+            if (savedNumber) document.getElementById('invoiceNumber').value = savedNumber;
+        }
 
-        // Mostrar resultados en el desplegable
-        if (resultados.length > 0) {
-            suggestionsList.innerHTML = '';
-            resultados.forEach(item => {
-                const div = document.createElement('div');
-                div.classList.add('suggestion-item');
-                div.innerHTML = `<strong>${item.nombre}</strong> - $${item.precio.toFixed(2)}`;
+        async function loadLocalProductsJson() {
+            try {
+                // Intentar leer el archivo JSON relativo
+                const response = await fetch('./productos.json?t=' + new Date().getTime());
+                if (!response.ok) throw new Error('No se pudo cargar productos.json');
+                const data = await response.json();
+                if (Array.isArray(data)) {
+                    cachedGitHubProducts = data
+                        .filter(p => !p.suspendido)
+                        .map(p => ({
+                            description: p.nombre,
+                            price: p.precio,
+                            photo: p.foto || ''
+                        }));
+                    // Guardar en caché local por si acaso se abre offline
+                    localStorage.setItem('cachedProductsBackup', JSON.stringify(cachedGitHubProducts));
+                }
+            } catch (error) {
+                console.log('CORS o error local detectado, cargando desde caché de respaldo...', error);
+                const backup = localStorage.getItem('cachedProductsBackup');
+                if (backup) {
+                    try { cachedGitHubProducts = JSON.parse(backup); } catch(e) {}
+                }
+            }
+        }
+
+        function syncInputs(itemId, field, value) {
+            const row = document.getElementById('row_' + itemId);
+            const card = document.getElementById('card_' + itemId);
+            
+            if (field === 'desc') {
+                if (row) row.querySelector('.description-input').value = value;
+                if (card) card.querySelector('.description-textarea').value = value;
                 
-                // Al hacer clic en una opción, se rellena el input
-                div.addEventListener('click', function() {
-                    searchInput.value = item.nombre;
-                    suggestionsList.innerHTML = '';
-                    suggestionsList.style.display = 'none';
-                    console.log("Producto seleccionado:", item);
+                // Buscar coincidencia exacta o parcial en el JSON para auto-completar precio e imagen
+                const match = cachedGitHubProducts.find(p => p.description.toLowerCase().trim() === value.toLowerCase().trim());
+                if (match) {
+                    if (match.price !== undefined) {
+                        syncInputs(itemId, 'price', match.price);
+                    }
+                    if (match.photo) {
+                        const imgRow = row?.querySelector('.product-thumb');
+                        const imgCard = card?.querySelector('.product-thumb');
+                        if (imgRow) { imgRow.src = match.photo; imgRow.style.display = 'block'; }
+                        if (imgCard) { imgCard.src = match.photo; imgCard.style.display = 'block'; }
+                    }
+                    calculateTotals();
+                }
+            } else if (field === 'qty') {
+                if (row) row.querySelector('.quantity').value = value;
+                if (card) card.querySelector('.quantity').value = value;
+            } else if (field === 'price') {
+                if (row) row.querySelector('.price').value = value;
+                if (card) card.querySelector('.price').value = value;
+            }
+        }
+
+        function removeItemById(itemId) {
+            const row = document.getElementById('row_' + itemId);
+            const card = document.getElementById('card_' + itemId);
+            if (row) row.remove();
+            if (card) card.remove();
+            calculateTotals();
+        }
+
+        function formatNumber(number) {
+            return new Intl.NumberFormat('es-AR', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(number);
+        }
+
+        function calculateTotals() {
+            const rows = document.querySelectorAll('#line-items tr');
+            let subtotal = 0;
+
+            rows.forEach(row => {
+                const quantityInput = row.querySelector('.quantity');
+                const priceInput = row.querySelector('.price');
+                if (!quantityInput || !priceInput) return;
+
+                const quantity = parseFloat(quantityInput.value) || 0;
+                const price = parseFloat(priceInput.value.toString().replace(',', '.')) || 0;
+                const totalItem = quantity * price;
+                
+                const totalItemSpan = row.querySelector('.total-item');
+                if (totalItemSpan) totalItemSpan.textContent = formatNumber(totalItem);
+                
+                subtotal += totalItem;
+            });
+
+            const cards = document.querySelectorAll('#cards-container > div');
+            cards.forEach(card => {
+                const quantityInput = card.querySelector('.quantity');
+                const priceInput = card.querySelector('.price');
+                if (!quantityInput || !priceInput) return;
+
+                const quantity = parseFloat(quantityInput.value) || 0;
+                const price = parseFloat(priceInput.value) || 0;
+                const totalItem = quantity * price;
+                
+                const totalItemSpan = card.querySelector('.total-item');
+                if (totalItemSpan) totalItemSpan.textContent = formatNumber(totalItem);
+            });
+
+            const taxRate = parseFloat(document.getElementById('tax-rate').value) || 0;
+            const taxAmount = subtotal * (taxRate / 100);
+            const total = subtotal + taxAmount;
+
+            document.getElementById('subtotal').textContent = formatNumber(subtotal);
+            document.getElementById('tax-amount').textContent = formatNumber(taxAmount);
+            document.getElementById('total').textContent = formatNumber(total);
+        }
+
+        function addLineItem(description = '', quantity = '', price = 0, photo = '') {
+            const tbody = document.getElementById('line-items');
+            const cardsContainer = document.getElementById('cards-container');
+            
+            const itemId = 'item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            const priceForInput = parseFloat(price).toFixed(2);
+            
+            if (!photo && description) {
+                const found = cachedGitHubProducts.find(p => p.description.toLowerCase().trim() === description.toLowerCase().trim());
+                if (found) photo = found.photo;
+            }
+
+            const imgDisplay = photo ? 'block' : 'none';
+            
+            const row = document.createElement('tr');
+            row.id = 'row_' + itemId;
+            row.innerHTML = `
+                <td class="px-2 py-0 text-center image-column">
+                    <img src="${photo}" alt="" class="product-thumb w-8 h-8 object-cover rounded mx-auto border" style="display: ${imgDisplay};">
+                </td>
+                <td class="px-4 py-0 description-column">
+                    <input type="text" class="description-input" value="${description}" oninput="syncInputs('${itemId}', 'desc', this.value); calculateTotals()">
+                </td>
+                <td class="px-4 py-0 quantity-column"><input type="number" value="${quantity}" min="0" oninput="syncInputs('${itemId}', 'qty', this.value); calculateTotals()" class="table-input quantity text-center"></td>
+                <td class="px-4 py-0 price-column text-right"><input type="number" value="${priceForInput}" min="0" step="0.01" oninput="syncInputs('${itemId}', 'price', this.value); calculateTotals()" class="table-input price text-right"></td>
+                <td class="px-4 py-0 total-column text-right"><span class="total-item text-xs">0,00</span></td>
+                <td class="px-4 py-0 actions-column text-center text-xs font-medium print:hidden">
+                    <button onclick="removeItemById('${itemId}')" class="text-red-600 hover:text-red-900">Eliminar</button>
+                </td>
+            `;
+            tbody.appendChild(row);
+
+            const card = document.createElement('div');
+            card.id = 'card_' + itemId;
+            card.className = "py-2 px-1 flex items-center justify-between gap-1.5 bg-white text-xs border-b";
+            card.innerHTML = `
+                <button onclick="removeItemById('${itemId}')" class="text-red-500 font-bold px-1 text-sm shrink-0">✕</button>
+                <img src="${photo}" alt="" class="product-thumb w-9 h-9 object-cover rounded shrink-0 border" style="display: ${imgDisplay};">
+                <div class="flex-1 min-w-0">
+                    <textarea rows="1" placeholder="Producto" class="description-textarea w-full p-1 border rounded text-xs bg-gray-50" style="min-height:30px;" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'; syncInputs('${itemId}', 'desc', this.value); calculateTotals()">${description}</textarea>
+                </div>
+                <div class="flex items-center gap-0.5 shrink-0">
+                    <input type="number" value="${quantity}" min="0" oninput="syncInputs('${itemId}', 'qty', this.value); calculateTotals()" class="w-9 p-1 border rounded text-center quantity font-semibold">
+                    <span class="text-gray-400">x</span>
+                    <input type="number" value="${priceForInput}" min="0" step="0.01" oninput="syncInputs('${itemId}', 'price', this.value); calculateTotals()" class="w-14 p-1 border rounded text-right price">
+                </div>
+                <div class="w-14 text-right shrink-0 text-gray-900 total-item font-medium">0,00</div>
+            `;
+            cardsContainer.appendChild(card);
+
+            const rowInput = row.querySelector('.description-input');
+            const cardTextarea = card.querySelector('.description-textarea');
+            
+            if (window.innerWidth < 768 && cardTextarea) {
+                cardTextarea.focus();
+            } else if (rowInput) {
+                rowInput.focus();
+            }
+
+            calculateTotals();
+        }
+
+        function processOrderList() {
+            const listText = document.getElementById('orderList').value.trim();
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.classList.add('hidden');
+            if (!listText) { errorDiv.textContent = 'Por favor, pega una lista de productos...'; errorDiv.classList.remove('hidden'); return; }
+            const tbody = document.getElementById('line-items');
+            const cardsContainer = document.getElementById('cards-container');
+            tbody.innerHTML = ''; cardsContainer.innerHTML = '';
+            const cleanNumberText = (text) => text.replace(/\s/g, '').replace(/\$/g, '').replace(/\./g, '').replace(/,/g, '.'); 
+            const regexFormato1 = /^\s*(\d+)\s*x\s*(.+?)\s*-\s*\$?\s*([\d\s.,]+)\s*$/i; 
+            const regexFormato4 = /^\s*[\*\-]?\s*(.+?)\s*\(x(\d+)\)\s*-\s*(?:SUBT|TOTAL|PRECIO):\s*\$?\s*([\d\s.,]+)\s*$/i; 
+            const lines = listText.split('\n').map(line => line.trim()).filter(line => line !== '');
+            let hasError = false; let currentLineIndex = 0; const groupedItemsMap = new Map(); 
+            while (currentLineIndex < lines.length) {
+                const line = lines[currentLineIndex]; let newItem = null;
+                const match4 = line.match(regexFormato4); const match1 = line.match(regexFormato1); 
+                if (match4) {
+                    const description = match4[1].trim().replace(/^[\*\-\s]+/, ''); const quantity = parseInt(match4[2], 10); const priceTotal = parseFloat(cleanNumberText(match4[3]));
+                    if (!isNaN(quantity) && quantity > 0 && !isNaN(priceTotal)) newItem = { description, quantity, priceUnit: priceTotal / quantity }; else hasError = true;
+                    currentLineIndex++;
+                } else if (match1) {
+                    const quantity = parseInt(match1[1], 10); const priceTotal = parseFloat(cleanNumberText(match1[3])); const description = match1[2].trim();
+                    if (!isNaN(quantity) && quantity > 0 && !isNaN(priceTotal)) newItem = { description, quantity, priceUnit: priceTotal / quantity }; else hasError = true;
+                    currentLineIndex++;
+                } else { currentLineIndex++; }
+                if (newItem) { 
+                    const key = newItem.description.toLowerCase(); 
+                    if (groupedItemsMap.has(key)) groupedItemsMap.get(key).quantity += newItem.quantity; else groupedItemsMap.set(key, newItem); 
+                }
+            }
+            const processedItems = Array.from(groupedItemsMap.values());
+            processedItems.sort((a, b) => a.description.localeCompare(b.description, 'es', { sensitivity: 'base' }));
+            if (processedItems.length > 0) { 
+                processedItems.forEach(item => { 
+                    if (item.description.trim() !== '') {
+                        let photoUrl = '';
+                        const matchedProd = cachedGitHubProducts.find(p => p.description.toLowerCase().trim() === item.description.toLowerCase().trim());
+                        if (matchedProd) photoUrl = matchedProd.photo;
+
+                        addLineItem(item.description, item.quantity, item.priceUnit, photoUrl); 
+                    }
+                }); 
+            }
+            if (hasError) { errorDiv.textContent = 'Posibles errores detectados.'; errorDiv.classList.remove('hidden'); }
+            if (tbody.rows.length === 0 && processedItems.length === 0) { errorDiv.textContent = 'No hay artículos.'; errorDiv.classList.remove('hidden'); } else if (!hasError) { document.getElementById('orderList').value = ''; }
+        }
+
+        function saveCurrentClient() {
+            const clientName = document.getElementById('clientName').value.trim(); if (!clientName) return;
+            try {
+                const clients = JSON.parse(localStorage.getItem('clients')) || []; const existingClientIndex = clients.findIndex(c => c.name === clientName);
+                const newClient = { name: clientName, address: document.getElementById('clientAddress').value.trim() };
+                if (existingClientIndex !== -1) clients[existingClientIndex] = newClient; else clients.push(newClient);
+                localStorage.setItem('clients', JSON.stringify(clients)); loadClientsFromLocalStorage();
+            } catch (e) { console.error(e); }
+        }
+
+        function loadClientsFromLocalStorage() {
+            try {
+                const clients = JSON.parse(localStorage.getItem('clients')) || []; const select = document.getElementById('clientSelect'); const container = document.getElementById('clientSelectContainer');
+                while (select.options.length > 1) { select.remove(1); }
+                if (clients.length > 0) { container.classList.remove('hidden'); clients.forEach(client => { const option = document.createElement('option'); option.value = client.name; option.textContent = client.name; select.appendChild(option); }); } else { container.classList.add('hidden'); }
+            } catch (e) { console.error(e); }
+        }
+
+        function loadSelectedClient() {
+            const select = document.getElementById('clientSelect'); const selectedClientName = select.value;
+            if (!selectedClientName) { document.getElementById('clientName').value = ''; document.getElementById('clientAddress').value = ''; return; }
+            try { const clients = JSON.parse(localStorage.getItem('clients')) || []; const selectedClient = clients.find(c => c.name === selectedClientName); if (selectedClient) { document.getElementById('clientName').value = selectedClient.name || ''; document.getElementById('clientAddress').value = selectedClient.address || ''; } } catch (e) { console.error(e); }
+        }
+
+        function saveAndPrintInvoice() {
+            const errorDiv = document.getElementById('error-message'); errorDiv.classList.add('hidden'); 
+            const items = document.querySelectorAll('#line-items tr'); 
+            if (items.length === 0 || (items.length === 1 && items[0].querySelector('.description-input').value.trim() === '')) { 
+                errorDiv.textContent = 'Error: Tabla vacía.'; errorDiv.classList.remove('hidden'); return; 
+            }
+            saveInvoiceToHistory();
+            window.print();
+        }
+
+        function saveInvoiceToHistory() {
+            try {
+                const invoiceNumber = document.getElementById('invoiceNumber').value;
+                const invoiceDate = document.getElementById('invoiceDate').value;
+                const clientName = document.getElementById('clientName').value.trim() || 'Cliente Genérico';
+                const clientAddress = document.getElementById('clientAddress').value.trim();
+                const totalText = document.getElementById('total').textContent;
+
+                const currentItems = [];
+                document.querySelectorAll('#line-items tr').forEach(row => {
+                    const desc = row.querySelector('.description-input')?.value || '';
+                    const qty = row.querySelector('.quantity')?.value || 0;
+                    const price = row.querySelector('.price')?.value || 0;
+                    const photo = row.querySelector('.product-thumb')?.src || '';
+                    if (desc) currentItems.push({ desc, qty, price, photo });
                 });
 
-                suggestionsList.appendChild(div);
+                const invoiceRecord = {
+                    id: 'inv_' + Date.now(),
+                    number: invoiceNumber,
+                    date: invoiceDate,
+                    clientName: clientName,
+                    clientAddress: clientAddress,
+                    total: totalText,
+                    items: currentItems,
+                    timestamp: new Date().getTime()
+                };
+
+                let history = JSON.parse(localStorage.getItem('invoiceHistory')) || [];
+                history.unshift(invoiceRecord); 
+                localStorage.setItem('invoiceHistory', JSON.stringify(history));
+                cleanAndLoadInvoiceHistory();
+            } catch(e) {
+                console.error("Error al guardar historial", e);
+            }
+        }
+
+        function cleanAndLoadInvoiceHistory() {
+            try {
+                let history = JSON.parse(localStorage.getItem('invoiceHistory')) || [];
+                const now = new Date().getTime();
+                const oneMonthMs = 30 * 24 * 60 * 60 * 1000;
+
+                history = history.filter(inv => (now - inv.timestamp) < oneMonthMs);
+                localStorage.setItem('invoiceHistory', JSON.stringify(history));
+
+                const tbody = document.getElementById('invoice-history-list');
+                tbody.innerHTML = '';
+
+                if (history.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="px-2 py-2 text-center text-gray-400">No hay facturas guardadas en el último mes.</td></tr>`;
+                    return;
+                }
+
+                history.forEach(inv => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="px-2 py-1.5 font-semibold text-gray-800">${inv.number}</td>
+                        <td class="px-2 py-1.5 text-gray-600">${inv.date}</td>
+                        <td class="px-2 py-1.5 text-gray-800">${inv.clientName}</td>
+                        <td class="px-2 py-1.5 text-right font-semibold text-gray-900">$ ${inv.total}</td>
+                        <td class="px-2 py-1.5 text-center space-x-2">
+                            <button onclick='loadInvoiceFromHistory(${JSON.stringify(inv)})' class="text-blue-600 hover:underline font-medium">Cargar</button>
+                            <button onclick="deleteInvoiceFromHistory('${inv.id}')" class="text-red-600 hover:underline font-medium">Eliminar</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch(e) {
+                console.error("Error cargando historial", e);
+            }
+        }
+
+        function deleteInvoiceFromHistory(id) {
+            if (!confirm('¿Estás seguro de eliminar esta factura del historial?')) return;
+            try {
+                let history = JSON.parse(localStorage.getItem('invoiceHistory')) || [];
+                history = history.filter(inv => inv.id !== id);
+                localStorage.setItem('invoiceHistory', JSON.stringify(history));
+                cleanAndLoadInvoiceHistory();
+            } catch (e) {
+                console.error("Error al eliminar factura", e);
+            }
+        }
+
+        function loadInvoiceFromHistory(inv) {
+            document.getElementById('invoiceNumber').value = inv.number;
+            document.getElementById('invoiceDate').value = inv.date;
+            document.getElementById('clientName').value = inv.clientName;
+            document.getElementById('clientAddress').value = inv.clientAddress || '';
+
+            const tbody = document.getElementById('line-items');
+            const cardsContainer = document.getElementById('cards-container');
+            tbody.innerHTML = ''; 
+            cardsContainer.innerHTML = '';
+
+            if (inv.items && inv.items.length > 0) {
+                inv.items.forEach(item => {
+                    addLineItem(item.desc, item.qty, item.price, item.photo);
+                });
+            }
+            calculateTotals();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function resetInvoice() { 
+            document.getElementById('clientName').value = ''; 
+            document.getElementById('clientAddress').value = ''; 
+            document.getElementById('clientSelect').value = ''; 
+            document.getElementById('orderList').value = ''; 
+            const tbody = document.getElementById('line-items'); 
+            const cardsContainer = document.getElementById('cards-container'); 
+            tbody.innerHTML = ''; cardsContainer.innerHTML = ''; 
+            document.getElementById('invoiceNumber').value = '001'; 
+            saveInvoiceNumber(); 
+            document.getElementById('invoiceDate').valueAsDate = new Date(); 
+            calculateTotals(); 
+        }
+
+        function setupEnterKeyNavigation() {
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    const activeElement = document.activeElement; const isInputInTable = activeElement.closest('#line-items');
+                    if (isInputInTable) {
+                        e.preventDefault(); const currentRow = activeElement.closest('tr'); const inputsInRow = Array.from(currentRow.querySelectorAll('input')); const currentIndexInRow = inputsInRow.indexOf(activeElement);
+                        if (currentIndexInRow < inputsInRow.length - 1) { inputsInRow[currentIndexInRow + 1].focus(); } else { const nextRow = currentRow.nextElementSibling; if (nextRow) { const firstInputInNextRow = nextRow.querySelector('input'); if (firstInputInNextRow) firstInputInNextRow.focus(); } else { addLineItem(); } }
+                    }
+                }
             });
-            suggestionsList.style.display = 'block';
-        } else {
-            suggestionsList.innerHTML = '<div class="suggestion-item">No se encontraron productos</div>';
-            suggestionsList.style.display = 'block';
         }
-    });
-
-    // Ocultar la lista si se hace clic fuera
-    document.addEventListener('click', function(e) {
-        if (!e.target.closest('.form-group')) {
-            suggestionsList.style.display = 'none';
-        }
-    });
-</script>
-
+    </script>
 </body>
 </html>
