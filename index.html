@@ -60,7 +60,8 @@
             text-overflow: ellipsis;
         }
         
-        .description-column { width: 50%; }
+        .image-column { width: 6%; }
+        .description-column { width: 44%; }
         .quantity-column { width: 10%; }
         .price-column { width: 15%; }
         .total-column { width: 15%; }
@@ -90,7 +91,7 @@
                 max-width: 100% !important;
                 width: 100% !important;
             }
-            footer, button, section:has(#orderList), #clientSelectContainer, .actions-column, th:last-child, td:last-child, h1, #history-section {
+            footer, button, section:has(#orderList), #clientSelectContainer, .actions-column, th:last-child, td:last-child, h1, #history-section, .product-thumb {
                 display: none !important;
             }
             #print-header-company {
@@ -259,12 +260,15 @@
         </section>
 
         <div class="mb-3">
+            <!-- Vista en Tarjetas para Celular -->
             <div id="cards-container" class="block md:hidden divide-y divide-gray-200 border-t border-b border-gray-200 print:hidden"></div>
 
+            <!-- Vista en Tabla para Escritorio -->
             <div class="hidden md:block overflow-x-auto rounded-lg shadow-md print:shadow-none">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-blue-50">
                         <tr>
+                            <th class="px-2 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider image-column">Img</th>
                             <th class="px-4 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider description-column">Descripción</th>
                             <th class="px-4 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider quantity-column">Cant.</th>
                             <th class="px-4 py-1 text-right text-xs font-medium text-gray-500 uppercase tracking-wider price-column">Precio Unit.</th>
@@ -298,7 +302,6 @@
             </div>
         </div>
 
-        <!-- SECCIÓN DE HISTORIAL Y CLIENTES CON COMPRAS -->
         <section id="history-section" class="mt-6 pt-4 border-t print:hidden">
             <details class="bg-gray-50 p-3 rounded-lg border">
                 <summary class="text-xs font-bold text-gray-700 cursor-pointer uppercase tracking-wider">Historial de Facturas (Último Mes) y Compras por Cliente</summary>
@@ -345,7 +348,7 @@
             document.getElementById('invoiceDate').valueAsDate = new Date();
             loadClientsFromLocalStorage();
             loadInvoiceNumber(); 
-            loadLocalProductsJson(); // Carga automática desde el archivo precios.json local
+            loadLocalProductsJson(); 
             cleanAndLoadInvoiceHistory();
             calculateTotals();
             setupEnterKeyNavigation();
@@ -362,15 +365,20 @@
 
         async function loadLocalProductsJson() {
             try {
-                // Lee automáticamente el archivo precios.json ubicado en la misma ruta en GitHub Pages
-                const response = await fetch('./precios.json');
-                if (!response.ok) throw new Error('No se pudo cargar el archivo precios.json');
+                const response = await fetch('./productos.json');
+                if (!response.ok) throw new Error('No se pudo cargar el archivo productos.json');
                 const data = await response.json();
                 if (Array.isArray(data)) {
-                    cachedGitHubProducts = data;
+                    cachedGitHubProducts = data
+                        .filter(p => !p.suspendido)
+                        .map(p => ({
+                            description: p.nombre,
+                            price: p.precio,
+                            photo: p.foto || '' // Guardamos la URL de la imagen
+                        }));
                 }
             } catch (error) {
-                console.log('No se cargó la lista de precios automática o no existe aún el archivo precios.json:', error);
+                console.log('No se cargó la lista de productos automática o no existe aún el archivo productos.json:', error);
             }
         }
 
@@ -382,10 +390,18 @@
                 if (row) row.querySelector('.description-input').value = value;
                 if (card) card.querySelector('.description-textarea').value = value;
                 
-                // Autocompletar precio si coincide con el JSON
+                // Buscar coincidencia en el JSON para auto-completar precio e imagen
                 const match = cachedGitHubProducts.find(p => p.description.toLowerCase() === value.toLowerCase());
-                if (match && match.price !== undefined) {
-                    syncInputs(itemId, 'price', match.price);
+                if (match) {
+                    if (match.price !== undefined) {
+                        syncInputs(itemId, 'price', match.price);
+                    }
+                    if (match.photo) {
+                        const imgRow = row?.querySelector('.product-thumb');
+                        const imgCard = card?.querySelector('.product-thumb');
+                        if (imgRow) { imgRow.src = match.photo; imgRow.style.display = 'block'; }
+                        if (imgCard) { imgCard.src = match.photo; imgCard.style.display = 'block'; }
+                    }
                     calculateTotals();
                 }
             } else if (field === 'qty') {
@@ -454,16 +470,28 @@
             document.getElementById('total').textContent = formatNumber(total);
         }
 
-        function addLineItem(description = '', quantity = '', price = 0) {
+        function addLineItem(description = '', quantity = '', price = 0, photo = '') {
             const tbody = document.getElementById('line-items');
             const cardsContainer = document.getElementById('cards-container');
             
             const itemId = 'item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
             const priceForInput = parseFloat(price).toFixed(2);
             
+            // Si no pasamos foto de entrada, buscamos si el producto ya existe en el JSON
+            if (!photo && description) {
+                const found = cachedGitHubProducts.find(p => p.description.toLowerCase() === description.toLowerCase());
+                if (found) photo = found.photo;
+            }
+
+            const imgDisplay = photo ? 'block' : 'none';
+            
+            // Fila para Escritorio (con miniatura a la izquierda)
             const row = document.createElement('tr');
             row.id = 'row_' + itemId;
             row.innerHTML = `
+                <td class="px-2 py-0 text-center image-column">
+                    <img src="${photo}" alt="" class="product-thumb w-8 h-8 object-cover rounded mx-auto border" style="display: ${imgDisplay};">
+                </td>
                 <td class="px-4 py-0 description-column">
                     <input type="text" class="description-input" value="${description}" oninput="syncInputs('${itemId}', 'desc', this.value); calculateTotals()">
                 </td>
@@ -476,11 +504,13 @@
             `;
             tbody.appendChild(row);
 
+            // Tarjeta para Celular (con miniatura a la izquierda del nombre)
             const card = document.createElement('div');
             card.id = 'card_' + itemId;
-            card.className = "py-1.5 px-0.5 flex items-center justify-between gap-1 bg-white text-xs";
+            card.className = "py-2 px-1 flex items-center justify-between gap-1.5 bg-white text-xs border-b";
             card.innerHTML = `
                 <button onclick="removeItemById('${itemId}')" class="text-red-500 font-bold px-1 text-sm shrink-0">✕</button>
+                <img src="${photo}" alt="" class="product-thumb w-9 h-9 object-cover rounded shrink-0 border" style="display: ${imgDisplay};">
                 <div class="flex-1 min-w-0">
                     <textarea rows="1" placeholder="Producto" class="description-textarea w-full p-1 border rounded text-xs bg-gray-50" style="min-height:30px;" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'; syncInputs('${itemId}', 'desc', this.value); calculateTotals()">${description}</textarea>
                 </div>
@@ -489,7 +519,7 @@
                     <span class="text-gray-400">x</span>
                     <input type="number" value="${priceForInput}" min="0" step="0.01" oninput="syncInputs('${itemId}', 'price', this.value); calculateTotals()" class="w-14 p-1 border rounded text-right price">
                 </div>
-                <div class="w-16 text-right shrink-0 text-gray-900 total-item">0,00</div>
+                <div class="w-14 text-right shrink-0 text-gray-900 total-item font-medium">0,00</div>
             `;
             cardsContainer.appendChild(card);
 
@@ -537,7 +567,18 @@
             }
             const processedItems = Array.from(groupedItemsMap.values());
             processedItems.sort((a, b) => a.description.localeCompare(b.description, 'es', { sensitivity: 'base' }));
-            if (processedItems.length > 0) { processedItems.forEach(item => { if (item.description.trim() !== '') addLineItem(item.description, item.quantity, item.priceUnit); }); }
+            if (processedItems.length > 0) { 
+                processedItems.forEach(item => { 
+                    if (item.description.trim() !== '') {
+                        // Buscar si existe foto asociada en el JSON
+                        let photoUrl = '';
+                        const matchedProd = cachedGitHubProducts.find(p => p.description.toLowerCase() === item.description.toLowerCase());
+                        if (matchedProd) photoUrl = matchedProd.photo;
+
+                        addLineItem(item.description, item.quantity, item.priceUnit, photoUrl); 
+                    }
+                }); 
+            }
             if (hasError) { errorDiv.textContent = 'Posibles errores detectados.'; errorDiv.classList.remove('hidden'); }
             if (tbody.rows.length === 0 && processedItems.length === 0) { errorDiv.textContent = 'No hay artículos.'; errorDiv.classList.remove('hidden'); } else if (!hasError) { document.getElementById('orderList').value = ''; }
         }
@@ -590,7 +631,8 @@
                     const desc = row.querySelector('.description-input')?.value || '';
                     const qty = row.querySelector('.quantity')?.value || 0;
                     const price = row.querySelector('.price')?.value || 0;
-                    if (desc) currentItems.push({ desc, qty, price });
+                    const photo = row.querySelector('.product-thumb')?.src || '';
+                    if (desc) currentItems.push({ desc, qty, price, photo });
                 });
 
                 const invoiceRecord = {
@@ -675,7 +717,7 @@
 
             if (inv.items && inv.items.length > 0) {
                 inv.items.forEach(item => {
-                    addLineItem(item.desc, item.qty, item.price);
+                    addLineItem(item.desc, item.qty, item.price, item.photo);
                 });
             }
             calculateTotals();
