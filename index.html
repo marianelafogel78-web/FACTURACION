@@ -32,7 +32,6 @@
         .shadow-custom {
             box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 10px -2px rgba(0, 0, 0, 0.05);
         }
-        
         .table-input {
             width: 100%;
             padding: 0px 4px !important;
@@ -46,7 +45,6 @@
             border-color: #3b82f6;
             outline: none;
         }
-        
         input.description-input {
             width: 100%;
             border: 1px solid #d1d5db;
@@ -59,7 +57,6 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
-        
         .image-column { width: 6%; }
         .description-column { width: 44%; }
         .quantity-column { width: 10%; }
@@ -70,10 +67,7 @@
         .table-input.quantity, .table-input.price {
              text-align: right;
         }
-
-        #print-footer {
-            display: none;
-        }
+        #print-footer { display: none; }
 
         @media print {
             @page { margin: 0; }
@@ -344,11 +338,11 @@
     <script>
         let cachedGitHubProducts = [];
 
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('invoiceDate').valueAsDate = new Date();
             loadClientsFromLocalStorage();
             loadInvoiceNumber(); 
-            loadLocalProductsJson(); 
+            await loadLocalProductsJson(); 
             cleanAndLoadInvoiceHistory();
             calculateTotals();
             setupEnterKeyNavigation();
@@ -365,8 +359,9 @@
 
         async function loadLocalProductsJson() {
             try {
-                const response = await fetch('./productos.json');
-                if (!response.ok) throw new Error('No se pudo cargar el archivo productos.json');
+                // Intentar leer el archivo JSON relativo
+                const response = await fetch('./productos.json?t=' + new Date().getTime());
+                if (!response.ok) throw new Error('No se pudo cargar productos.json');
                 const data = await response.json();
                 if (Array.isArray(data)) {
                     cachedGitHubProducts = data
@@ -374,11 +369,17 @@
                         .map(p => ({
                             description: p.nombre,
                             price: p.precio,
-                            photo: p.foto || '' // Guardamos la URL de la imagen
+                            photo: p.foto || ''
                         }));
+                    // Guardar en caché local por si acaso se abre offline
+                    localStorage.setItem('cachedProductsBackup', JSON.stringify(cachedGitHubProducts));
                 }
             } catch (error) {
-                console.log('No se cargó la lista de productos automática o no existe aún el archivo productos.json:', error);
+                console.log('CORS o error local detectado, cargando desde caché de respaldo...', error);
+                const backup = localStorage.getItem('cachedProductsBackup');
+                if (backup) {
+                    try { cachedGitHubProducts = JSON.parse(backup); } catch(e) {}
+                }
             }
         }
 
@@ -390,8 +391,8 @@
                 if (row) row.querySelector('.description-input').value = value;
                 if (card) card.querySelector('.description-textarea').value = value;
                 
-                // Buscar coincidencia en el JSON para auto-completar precio e imagen
-                const match = cachedGitHubProducts.find(p => p.description.toLowerCase() === value.toLowerCase());
+                // Buscar coincidencia exacta o parcial en el JSON para auto-completar precio e imagen
+                const match = cachedGitHubProducts.find(p => p.description.toLowerCase().trim() === value.toLowerCase().trim());
                 if (match) {
                     if (match.price !== undefined) {
                         syncInputs(itemId, 'price', match.price);
@@ -477,15 +478,13 @@
             const itemId = 'item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
             const priceForInput = parseFloat(price).toFixed(2);
             
-            // Si no pasamos foto de entrada, buscamos si el producto ya existe en el JSON
             if (!photo && description) {
-                const found = cachedGitHubProducts.find(p => p.description.toLowerCase() === description.toLowerCase());
+                const found = cachedGitHubProducts.find(p => p.description.toLowerCase().trim() === description.toLowerCase().trim());
                 if (found) photo = found.photo;
             }
 
             const imgDisplay = photo ? 'block' : 'none';
             
-            // Fila para Escritorio (con miniatura a la izquierda)
             const row = document.createElement('tr');
             row.id = 'row_' + itemId;
             row.innerHTML = `
@@ -504,7 +503,6 @@
             `;
             tbody.appendChild(row);
 
-            // Tarjeta para Celular (con miniatura a la izquierda del nombre)
             const card = document.createElement('div');
             card.id = 'card_' + itemId;
             card.className = "py-2 px-1 flex items-center justify-between gap-1.5 bg-white text-xs border-b";
@@ -570,9 +568,8 @@
             if (processedItems.length > 0) { 
                 processedItems.forEach(item => { 
                     if (item.description.trim() !== '') {
-                        // Buscar si existe foto asociada en el JSON
                         let photoUrl = '';
-                        const matchedProd = cachedGitHubProducts.find(p => p.description.toLowerCase() === item.description.toLowerCase());
+                        const matchedProd = cachedGitHubProducts.find(p => p.description.toLowerCase().trim() === item.description.toLowerCase().trim());
                         if (matchedProd) photoUrl = matchedProd.photo;
 
                         addLineItem(item.description, item.quantity, item.priceUnit, photoUrl); 
@@ -613,7 +610,6 @@
             if (items.length === 0 || (items.length === 1 && items[0].querySelector('.description-input').value.trim() === '')) { 
                 errorDiv.textContent = 'Error: Tabla vacía.'; errorDiv.classList.remove('hidden'); return; 
             }
-            
             saveInvoiceToHistory();
             window.print();
         }
@@ -649,7 +645,6 @@
                 let history = JSON.parse(localStorage.getItem('invoiceHistory')) || [];
                 history.unshift(invoiceRecord); 
                 localStorage.setItem('invoiceHistory', JSON.stringify(history));
-                
                 cleanAndLoadInvoiceHistory();
             } catch(e) {
                 console.error("Error al guardar historial", e);
