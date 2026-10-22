@@ -46,7 +46,6 @@
             outline: none;
         }
         
-        /* Contenedor relativo para el input predictivo */
         .input-wrapper {
             position: relative;
             width: 100%;
@@ -70,28 +69,29 @@
             min-height: 28px !important;
         }
 
-        /* Lista de sugerencias predictivas flotante */
+        /* Lista predictiva flotante */
         .suggestions-box {
             position: absolute;
             top: 100%;
             left: 0;
             right: 0;
-            background: white;
-            border: 1px solid #cbd5e1;
+            background: #ffffff;
+            border: 2px solid #3b82f6;
             border-radius: 0.375rem;
-            max-height: 180px;
+            max-height: 200px;
             overflow-y: auto;
-            z-index: 50;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            z-index: 9999;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
         }
         .suggestion-item {
-            padding: 6px 10px;
-            font-size: 12px;
+            padding: 8px 10px;
+            font-size: 13px;
             cursor: pointer;
             border-bottom: 1px solid #f1f5f9;
             display: flex;
             align-items: center;
             gap: 8px;
+            background-color: #ffffff;
         }
         .suggestion-item:hover {
             background-color: #eff6ff;
@@ -377,16 +377,20 @@
     </div>
 
     <script>
-        let cachedGitHubProducts = [];
-
-        document.addEventListener('DOMContentLoaded', async () => {
+        document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('invoiceDate').valueAsDate = new Date();
             loadClientsFromLocalStorage();
             loadInvoiceNumber(); 
-            await loadLocalProductsJson(); 
             cleanAndLoadInvoiceHistory();
             calculateTotals();
             setupEnterKeyNavigation();
+
+            // Cerrar sugerencias al hacer clic fuera
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.input-wrapper')) {
+                    document.querySelectorAll('.suggestions-box').forEach(box => box.innerHTML = '');
+                }
+            });
         });
 
         function saveInvoiceNumber() {
@@ -398,38 +402,41 @@
             if (savedNumber) document.getElementById('invoiceNumber').value = savedNumber;
         }
 
-        async function loadLocalProductsJson() {
+        // Lectura obligatoria y en tiempo real directo desde productos.json sin caché local
+        async function fetchLiveProducts() {
             try {
                 const response = await fetch('./productos.json?t=' + new Date().getTime());
                 if (!response.ok) throw new Error('No se pudo cargar productos.json');
                 const data = await response.json();
                 if (Array.isArray(data)) {
-                    cachedGitHubProducts = data
+                    return data
                         .filter(p => !p.suspendido)
                         .map(p => ({
                             description: p.nombre,
                             price: p.precio,
                             photo: p.foto || ''
                         }));
-                    localStorage.setItem('cachedProductsBackup', JSON.stringify(cachedGitHubProducts));
                 }
             } catch (error) {
-                console.log('CORS o error local detectado, cargando desde caché de respaldo...', error);
-                const backup = localStorage.getItem('cachedProductsBackup');
-                if (backup) {
-                    try { cachedGitHubProducts = JSON.parse(backup); } catch(e) {}
-                }
+                console.error('Error al leer productos.json en tiempo real:', error);
             }
+            return [];
         }
 
-        // Función predictiva para mostrar sugerencias a medida que se escribe
-        function handleProductInput(itemId, query) {
+        // Motor predictivo conectado estrictamente al JSON en vivo
+        async function handleProductInput(itemId, query, type) {
             const row = document.getElementById('row_' + itemId);
             const card = document.getElementById('card_' + itemId);
             
-            // Sincronizar texto entre la tabla y la tarjeta móvil
-            if (row) row.querySelector('.description-input').value = query;
-            if (card) card.querySelector('.description-textarea').value = query;
+            if (type === 'row' && row) {
+                const val = row.querySelector('.description-input').value;
+                if (card) card.querySelector('.description-textarea').value = val;
+                query = val;
+            } else if (type === 'card' && card) {
+                const val = card.querySelector('.description-textarea').value;
+                if (row) row.querySelector('.description-input').value = val;
+                query = val;
+            }
 
             const boxRow = row?.querySelector('.suggestions-box');
             const boxCard = card?.querySelector('.suggestions-box');
@@ -441,35 +448,42 @@
                 return;
             }
 
+            // Obtener productos actualizados directo del JSON
+            const liveProducts = await fetchLiveProducts();
             const q = query.toLowerCase().trim();
-            const matches = cachedGitHubProducts.filter(p => p.description.toLowerCase().includes(q)).slice(0, 6);
+            const matches = liveProducts.filter(p => p.description.toLowerCase().includes(q)).slice(0, 8);
 
             let htmlContent = '';
             if (matches.length > 0) {
                 matches.forEach(m => {
+                    const safeDesc = m.description.replace(/'/g, "\\'").replace(/"/g, '&quot;');
                     htmlContent += `
-                        <div class="suggestion-item" onclick="selectProduct('${itemId}', '${m.description.replace(/'/g, "\\'")}', ${m.price}, '${m.photo}')">
-                            ${m.photo ? `<img src="${m.photo}" class="w-5 h-5 object-cover rounded border">` : ''}
-                            <span class="truncate">${m.description}</span> - <strong>$${m.price}</strong>
+                        <div class="suggestion-item" onmousedown="selectProduct('${itemId}', '${safeDesc}', ${m.price}, '${m.photo || ''}')">
+                            ${m.photo ? `<img src="${m.photo}" class="w-6 h-6 object-cover rounded border shrink-0">` : ''}
+                            <span class="truncate flex-1">${m.description}</span>
+                            <strong class="text-blue-600 shrink-0">$${m.price}</strong>
                         </div>
                     `;
                 });
+            } else {
+                htmlContent = `<div class="suggestion-item text-gray-400 italic">No se encontraron productos en el JSON</div>`;
             }
 
             if (boxRow) boxRow.innerHTML = htmlContent;
             if (boxCard) boxCard.innerHTML = htmlContent;
-
-            // Revisar coincidencia exacta para autocompletar precio e imagen de inmediato
-            const exactMatch = cachedGitHubProducts.find(p => p.description.toLowerCase().trim() === q);
-            if (exactMatch) {
-                selectProduct(itemId, exactMatch.description, exactMatch.price, exactMatch.photo);
-            } else {
-                calculateTotals();
-            }
+            calculateTotals();
         }
 
-        // Seleccionar un producto de la lista predictiva
-        function selectProduct(itemId, desc, price, photo) {
+        // Seleccionar producto de la lista desplegable y actualizar precio en vivo
+        async function selectProduct(itemId, desc, price, photo) {
+            // Validar si hay un precio más reciente en el JSON antes de aplicar
+            const liveProducts = await fetchLiveProducts();
+            const found = liveProducts.find(p => p.description.toLowerCase().trim() === desc.toLowerCase().trim());
+            if (found) {
+                price = found.price;
+                photo = found.photo || photo;
+            }
+
             const row = document.getElementById('row_' + itemId);
             const card = document.getElementById('card_' + itemId);
 
@@ -557,30 +571,35 @@
             document.getElementById('total').textContent = formatNumber(total);
         }
 
-        function addLineItem(description = '', quantity = '', price = 0, photo = '') {
+        async function addLineItem(description = '', quantity = '', price = 0, photo = '') {
             const tbody = document.getElementById('line-items');
             const cardsContainer = document.getElementById('cards-container');
             
             const itemId = 'item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-            const priceForInput = parseFloat(price).toFixed(2);
             
-            if (!photo && description) {
-                const found = cachedGitHubProducts.find(p => p.description.toLowerCase().trim() === description.toLowerCase().trim());
-                if (found) photo = found.photo;
+            // Si viene con descripción (ej: por WhatsApp), buscar su precio y foto actualizados del JSON en vivo
+            if (description) {
+                const liveProducts = await fetchLiveProducts();
+                const found = liveProducts.find(p => p.description.toLowerCase().trim() === description.toLowerCase().trim());
+                if (found) {
+                    price = found.price;
+                    photo = found.photo || '';
+                }
             }
 
+            const priceForInput = parseFloat(price).toFixed(2);
             const imgDisplay = photo ? 'block' : 'none';
             
-            // Fila de Escritorio con Predictivo e Imagen controlada
+            // Fila de Escritorio
             const row = document.createElement('tr');
             row.id = 'row_' + itemId;
             row.innerHTML = `
                 <td class="px-2 py-0 text-center image-column">
-                    <img src="${photo || ''}" alt="" class="product-thumb w-8 h-8 object-cover rounded mx-auto border" style="display: ${photo ? 'block' : 'none'};">
+                    <img src="${photo || ''}" alt="" class="product-thumb w-8 h-8 object-cover rounded mx-auto border" style="display: ${imgDisplay};">
                 </td>
-                <td class="px-4 py-0 description-column relative">
+                <td class="px-4 py-0 description-column">
                     <div class="input-wrapper">
-                        <input type="text" class="description-input" value="${description}" autocomplete="off" oninput="handleProductInput('${itemId}', this.value)">
+                        <input type="text" class="description-input" value="${description}" autocomplete="off" oninput="handleProductInput('${itemId}', this.value, 'row')">
                         <div class="suggestions-box"></div>
                     </div>
                 </td>
@@ -593,16 +612,16 @@
             `;
             tbody.appendChild(row);
 
-            // Tarjeta de Celular con Predictivo e Imagen controlada
+            // Tarjeta de Celular
             const card = document.createElement('div');
             card.id = 'card_' + itemId;
-            card.className = "py-2 px-1 flex items-center justify-between gap-1.5 bg-white text-xs border-b relative";
+            card.className = "py-2 px-1 flex items-center justify-between gap-1.5 bg-white text-xs border-b";
             card.innerHTML = `
                 <button onclick="removeItemById('${itemId}')" class="text-red-500 font-bold px-1 text-sm shrink-0">✕</button>
-                <img src="${photo || ''}" alt="" class="product-thumb w-9 h-9 object-cover rounded shrink-0 border" style="display: ${photo ? 'block' : 'none'};">
-                <div class="flex-1 min-w-0 relative">
+                <img src="${photo || ''}" alt="" class="product-thumb w-9 h-9 object-cover rounded shrink-0 border" style="display: ${imgDisplay};">
+                <div class="flex-1 min-w-0">
                     <div class="input-wrapper">
-                        <textarea rows="1" placeholder="Producto" class="description-textarea w-full p-1 border rounded text-xs bg-gray-50" autocomplete="off" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'; handleProductInput('${itemId}', this.value)">${description}</textarea>
+                        <textarea rows="1" placeholder="Producto" class="description-textarea w-full p-1 border rounded text-xs bg-gray-50" autocomplete="off" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'; handleProductInput('${itemId}', this.value, 'card')">${description}</textarea>
                         <div class="suggestions-box"></div>
                     </div>
                 </div>
@@ -627,19 +646,22 @@
             calculateTotals();
         }
 
-        function processOrderList() {
+        async function processOrderList() {
             const listText = document.getElementById('orderList').value.trim();
             const errorDiv = document.getElementById('error-message');
             errorDiv.classList.add('hidden');
             if (!listText) { errorDiv.textContent = 'Por favor, pega una lista de productos...'; errorDiv.classList.remove('hidden'); return; }
+            
             const tbody = document.getElementById('line-items');
             const cardsContainer = document.getElementById('cards-container');
             tbody.innerHTML = ''; cardsContainer.innerHTML = '';
+            
             const cleanNumberText = (text) => text.replace(/\s/g, '').replace(/\$/g, '').replace(/\./g, '').replace(/,/g, '.'); 
             const regexFormato1 = /^\s*(\d+)\s*x\s*(.+?)\s*-\s*\$?\s*([\d\s.,]+)\s*$/i; 
             const regexFormato4 = /^\s*[\*\-]?\s*(.+?)\s*\(x(\d+)\)\s*-\s*(?:SUBT|TOTAL|PRECIO):\s*\$?\s*([\d\s.,]+)\s*$/i; 
             const lines = listText.split('\n').map(line => line.trim()).filter(line => line !== '');
             let hasError = false; let currentLineIndex = 0; const groupedItemsMap = new Map(); 
+            
             while (currentLineIndex < lines.length) {
                 const line = lines[currentLineIndex]; let newItem = null;
                 const match4 = line.match(regexFormato4); const match1 = line.match(regexFormato1); 
@@ -659,16 +681,23 @@
             }
             const processedItems = Array.from(groupedItemsMap.values());
             processedItems.sort((a, b) => a.description.localeCompare(b.description, 'es', { sensitivity: 'base' }));
+            
             if (processedItems.length > 0) { 
-                processedItems.forEach(item => { 
+                const liveProducts = await fetchLiveProducts();
+                for (const item of processedItems) { 
                     if (item.description.trim() !== '') {
                         let photoUrl = '';
-                        const matchedProd = cachedGitHubProducts.find(p => p.description.toLowerCase().trim() === item.description.toLowerCase().trim());
-                        if (matchedProd) photoUrl = matchedProd.photo;
+                        let finalPrice = item.priceUnit;
 
-                        addLineItem(item.description, item.quantity, item.priceUnit, photoUrl); 
+                        // Validar si el producto existe en el JSON en vivo para tomar su precio actual si se prefiere
+                        const matchedProd = liveProducts.find(p => p.description.toLowerCase().trim() === item.description.toLowerCase().trim());
+                        if (matchedProd) {
+                            photoUrl = matchedProd.photo;
+                        }
+
+                        await addLineItem(item.description, item.quantity, finalPrice, photoUrl); 
                     }
-                }); 
+                } 
             }
             if (hasError) { errorDiv.textContent = 'Posibles errores detectados.'; errorDiv.classList.remove('hidden'); }
             if (tbody.rows.length === 0 && processedItems.length === 0) { errorDiv.textContent = 'No hay artículos.'; errorDiv.classList.remove('hidden'); } else if (!hasError) { document.getElementById('orderList').value = ''; }
