@@ -126,8 +126,14 @@
                 max-width: 100% !important;
                 width: 100% !important;
             }
-            footer, button, section:has(#orderList), #clientSelectContainer, .actions-column, th:last-child, td:last-child, h1, #history-section, .product-thumb, .suggestions-box {
+            footer, button, section:has(#orderList), #clientSelectContainer, .actions-column, th:last-child, td:last-child, h1, #history-section, .suggestions-box {
                 display: none !important;
+            }
+            /* Ocultar totalmente la columna de imágenes y las fotos al imprimir para evitar espacios vacíos */
+            .image-column, .product-thumb {
+                display: none !important;
+                width: 0 !important;
+                padding: 0 !important;
             }
             #print-header-company {
                 display: block !important;
@@ -377,11 +383,17 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+        let globalProductsCache = [];
+
+        document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('invoiceDate').valueAsDate = new Date();
             loadClientsFromLocalStorage();
             loadInvoiceNumber(); 
             cleanAndLoadInvoiceHistory();
+            
+            // Cargar productos al iniciar la página para que el predictivo sea inmediato
+            await fetchAndCacheProducts();
+
             calculateTotals();
             setupEnterKeyNavigation();
 
@@ -402,14 +414,14 @@
             if (savedNumber) document.getElementById('invoiceNumber').value = savedNumber;
         }
 
-        // Lectura obligatoria y en tiempo real directo desde productos.json sin caché local
-        async function fetchLiveProducts() {
+        // Carga en vivo desde productos.json al iniciar y refrescable
+        async function fetchAndCacheProducts() {
             try {
                 const response = await fetch('./productos.json?t=' + new Date().getTime());
                 if (!response.ok) throw new Error('No se pudo cargar productos.json');
                 const data = await response.json();
                 if (Array.isArray(data)) {
-                    return data
+                    globalProductsCache = data
                         .filter(p => !p.suspendido)
                         .map(p => ({
                             description: p.nombre,
@@ -418,12 +430,12 @@
                         }));
                 }
             } catch (error) {
-                console.error('Error al leer productos.json en tiempo real:', error);
+                console.error('Error al leer productos.json:', error);
+                globalProductsCache = [];
             }
-            return [];
         }
 
-        // Motor predictivo conectado estrictamente al JSON en vivo
+        // Motor predictivo instantáneo con la caché en memoria actual
         async function handleProductInput(itemId, query, type) {
             const row = document.getElementById('row_' + itemId);
             const card = document.getElementById('card_' + itemId);
@@ -448,10 +460,13 @@
                 return;
             }
 
-            // Obtener productos actualizados directo del JSON
-            const liveProducts = await fetchLiveProducts();
+            // Si por alguna razón la caché está vacía, intentamos recargarla al vuelo
+            if (globalProductsCache.length === 0) {
+                await fetchAndCacheProducts();
+            }
+
             const q = query.toLowerCase().trim();
-            const matches = liveProducts.filter(p => p.description.toLowerCase().includes(q)).slice(0, 8);
+            const matches = globalProductsCache.filter(p => p.description.toLowerCase().includes(q)).slice(0, 8);
 
             let htmlContent = '';
             if (matches.length > 0) {
@@ -466,7 +481,7 @@
                     `;
                 });
             } else {
-                htmlContent = `<div class="suggestion-item text-gray-400 italic">No se encontraron productos en el JSON</div>`;
+                htmlContent = `<div class="suggestion-item text-gray-400 italic">No se encontraron productos</div>`;
             }
 
             if (boxRow) boxRow.innerHTML = htmlContent;
@@ -474,11 +489,10 @@
             calculateTotals();
         }
 
-        // Seleccionar producto de la lista desplegable y actualizar precio en vivo
-        async function selectProduct(itemId, desc, price, photo) {
-            // Validar si hay un precio más reciente en el JSON antes de aplicar
-            const liveProducts = await fetchLiveProducts();
-            const found = liveProducts.find(p => p.description.toLowerCase().trim() === desc.toLowerCase().trim());
+        // Seleccionar producto de la lista desplegable
+        function selectProduct(itemId, desc, price, photo) {
+            // Validar precio actualizado de la caché
+            const found = globalProductsCache.find(p => p.description.toLowerCase().trim() === desc.toLowerCase().trim());
             if (found) {
                 price = found.price;
                 photo = found.photo || photo;
@@ -577,10 +591,12 @@
             
             const itemId = 'item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
             
-            // Si viene con descripción (ej: por WhatsApp), buscar su precio y foto actualizados del JSON en vivo
+            if (globalProductsCache.length === 0) {
+                await fetchAndCacheProducts();
+            }
+
             if (description) {
-                const liveProducts = await fetchLiveProducts();
-                const found = liveProducts.find(p => p.description.toLowerCase().trim() === description.toLowerCase().trim());
+                const found = globalProductsCache.find(p => p.description.toLowerCase().trim() === description.toLowerCase().trim());
                 if (found) {
                     price = found.price;
                     photo = found.photo || '';
@@ -683,14 +699,13 @@
             processedItems.sort((a, b) => a.description.localeCompare(b.description, 'es', { sensitivity: 'base' }));
             
             if (processedItems.length > 0) { 
-                const liveProducts = await fetchLiveProducts();
+                if (globalProductsCache.length === 0) await fetchAndCacheProducts();
                 for (const item of processedItems) { 
                     if (item.description.trim() !== '') {
                         let photoUrl = '';
                         let finalPrice = item.priceUnit;
 
-                        // Validar si el producto existe en el JSON en vivo para tomar su precio actual si se prefiere
-                        const matchedProd = liveProducts.find(p => p.description.toLowerCase().trim() === item.description.toLowerCase().trim());
+                        const matchedProd = globalProductsCache.find(p => p.description.toLowerCase().trim() === item.description.toLowerCase().trim());
                         if (matchedProd) {
                             photoUrl = matchedProd.photo;
                         }
