@@ -45,7 +45,14 @@
             border-color: #3b82f6;
             outline: none;
         }
-        input.description-input {
+        
+        /* Contenedor relativo para el input predictivo */
+        .input-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        input.description-input, textarea.description-textarea {
             width: 100%;
             border: 1px solid #d1d5db;
             padding: 0px 4px !important;
@@ -57,6 +64,40 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
+
+        textarea.description-textarea {
+            height: auto !important;
+            min-height: 28px !important;
+        }
+
+        /* Lista de sugerencias predictivas flotante */
+        .suggestions-box {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #cbd5e1;
+            border-radius: 0.375rem;
+            max-height: 180px;
+            overflow-y: auto;
+            z-index: 50;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .suggestion-item {
+            padding: 6px 10px;
+            font-size: 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .suggestion-item:hover {
+            background-color: #eff6ff;
+            color: #2563eb;
+        }
+
         .image-column { width: 6%; }
         .description-column { width: 44%; }
         .quantity-column { width: 10%; }
@@ -85,7 +126,7 @@
                 max-width: 100% !important;
                 width: 100% !important;
             }
-            footer, button, section:has(#orderList), #clientSelectContainer, .actions-column, th:last-child, td:last-child, h1, #history-section, .product-thumb {
+            footer, button, section:has(#orderList), #clientSelectContainer, .actions-column, th:last-child, td:last-child, h1, #history-section, .product-thumb, .suggestions-box {
                 display: none !important;
             }
             #print-header-company {
@@ -124,7 +165,7 @@
                 line-height: 1.1 !important;
                 display: block !important;
             }
-            input {
+            input, textarea {
                 border: none !important;
                 outline: none !important;
                 background: transparent !important;
@@ -359,7 +400,6 @@
 
         async function loadLocalProductsJson() {
             try {
-                // Intentar leer el archivo JSON relativo
                 const response = await fetch('./productos.json?t=' + new Date().getTime());
                 if (!response.ok) throw new Error('No se pudo cargar productos.json');
                 const data = await response.json();
@@ -371,7 +411,6 @@
                             price: p.precio,
                             photo: p.foto || ''
                         }));
-                    // Guardar en caché local por si acaso se abre offline
                     localStorage.setItem('cachedProductsBackup', JSON.stringify(cachedGitHubProducts));
                 }
             } catch (error) {
@@ -383,35 +422,82 @@
             }
         }
 
-        function syncInputs(itemId, field, value) {
+        // Función predictiva para mostrar sugerencias a medida que se escribe
+        function handleProductInput(itemId, query) {
             const row = document.getElementById('row_' + itemId);
             const card = document.getElementById('card_' + itemId);
             
-            if (field === 'desc') {
-                if (row) row.querySelector('.description-input').value = value;
-                if (card) card.querySelector('.description-textarea').value = value;
-                
-                // Buscar coincidencia exacta o parcial en el JSON para auto-completar precio e imagen
-                const match = cachedGitHubProducts.find(p => p.description.toLowerCase().trim() === value.toLowerCase().trim());
-                if (match) {
-                    if (match.price !== undefined) {
-                        syncInputs(itemId, 'price', match.price);
-                    }
-                    if (match.photo) {
-                        const imgRow = row?.querySelector('.product-thumb');
-                        const imgCard = card?.querySelector('.product-thumb');
-                        if (imgRow) { imgRow.src = match.photo; imgRow.style.display = 'block'; }
-                        if (imgCard) { imgCard.src = match.photo; imgCard.style.display = 'block'; }
-                    }
-                    calculateTotals();
-                }
-            } else if (field === 'qty') {
-                if (row) row.querySelector('.quantity').value = value;
-                if (card) card.querySelector('.quantity').value = value;
-            } else if (field === 'price') {
-                if (row) row.querySelector('.price').value = value;
-                if (card) card.querySelector('.price').value = value;
+            // Sincronizar texto entre la tabla y la tarjeta móvil
+            if (row) row.querySelector('.description-input').value = query;
+            if (card) card.querySelector('.description-textarea').value = query;
+
+            const boxRow = row?.querySelector('.suggestions-box');
+            const boxCard = card?.querySelector('.suggestions-box');
+
+            if (!query || query.trim().length === 0) {
+                if (boxRow) boxRow.innerHTML = '';
+                if (boxCard) boxCard.innerHTML = '';
+                calculateTotals();
+                return;
             }
+
+            const q = query.toLowerCase().trim();
+            const matches = cachedGitHubProducts.filter(p => p.description.toLowerCase().includes(q)).slice(0, 6);
+
+            let htmlContent = '';
+            if (matches.length > 0) {
+                matches.forEach(m => {
+                    htmlContent += `
+                        <div class="suggestion-item" onclick="selectProduct('${itemId}', '${m.description.replace(/'/g, "\\'")}', ${m.price}, '${m.photo}')">
+                            ${m.photo ? `<img src="${m.photo}" class="w-5 h-5 object-cover rounded border">` : ''}
+                            <span class="truncate">${m.description}</span> - <strong>$${m.price}</strong>
+                        </div>
+                    `;
+                });
+            }
+
+            if (boxRow) boxRow.innerHTML = htmlContent;
+            if (boxCard) boxCard.innerHTML = htmlContent;
+
+            // Revisar coincidencia exacta para autocompletar precio e imagen de inmediato
+            const exactMatch = cachedGitHubProducts.find(p => p.description.toLowerCase().trim() === q);
+            if (exactMatch) {
+                selectProduct(itemId, exactMatch.description, exactMatch.price, exactMatch.photo);
+            } else {
+                calculateTotals();
+            }
+        }
+
+        // Seleccionar un producto de la lista predictiva
+        function selectProduct(itemId, desc, price, photo) {
+            const row = document.getElementById('row_' + itemId);
+            const card = document.getElementById('card_' + itemId);
+
+            if (row) {
+                row.querySelector('.description-input').value = desc;
+                row.querySelector('.price').value = parseFloat(price).toFixed(2);
+                const img = row.querySelector('.product-thumb');
+                if (img) {
+                    if (photo) { img.src = photo; img.style.display = 'block'; }
+                    else { img.style.display = 'none'; }
+                }
+                const box = row.querySelector('.suggestions-box');
+                if (box) box.innerHTML = '';
+            }
+
+            if (card) {
+                card.querySelector('.description-textarea').value = desc;
+                card.querySelector('.price').value = parseFloat(price).toFixed(2);
+                const img = card.querySelector('.product-thumb');
+                if (img) {
+                    if (photo) { img.src = photo; img.style.display = 'block'; }
+                    else { img.style.display = 'none'; }
+                }
+                const box = card.querySelector('.suggestions-box');
+                if (box) box.innerHTML = '';
+            }
+
+            calculateTotals();
         }
 
         function removeItemById(itemId) {
@@ -485,17 +571,21 @@
 
             const imgDisplay = photo ? 'block' : 'none';
             
+            // Fila de Escritorio con Predictivo e Imagen controlada
             const row = document.createElement('tr');
             row.id = 'row_' + itemId;
             row.innerHTML = `
                 <td class="px-2 py-0 text-center image-column">
-                    <img src="${photo}" alt="" class="product-thumb w-8 h-8 object-cover rounded mx-auto border" style="display: ${imgDisplay};">
+                    <img src="${photo || ''}" alt="" class="product-thumb w-8 h-8 object-cover rounded mx-auto border" style="display: ${photo ? 'block' : 'none'};">
                 </td>
-                <td class="px-4 py-0 description-column">
-                    <input type="text" class="description-input" value="${description}" oninput="syncInputs('${itemId}', 'desc', this.value); calculateTotals()">
+                <td class="px-4 py-0 description-column relative">
+                    <div class="input-wrapper">
+                        <input type="text" class="description-input" value="${description}" autocomplete="off" oninput="handleProductInput('${itemId}', this.value)">
+                        <div class="suggestions-box"></div>
+                    </div>
                 </td>
-                <td class="px-4 py-0 quantity-column"><input type="number" value="${quantity}" min="0" oninput="syncInputs('${itemId}', 'qty', this.value); calculateTotals()" class="table-input quantity text-center"></td>
-                <td class="px-4 py-0 price-column text-right"><input type="number" value="${priceForInput}" min="0" step="0.01" oninput="syncInputs('${itemId}', 'price', this.value); calculateTotals()" class="table-input price text-right"></td>
+                <td class="px-4 py-0 quantity-column"><input type="number" value="${quantity}" min="0" oninput="calculateTotals()" class="table-input quantity text-center"></td>
+                <td class="px-4 py-0 price-column text-right"><input type="number" value="${priceForInput}" min="0" step="0.01" oninput="calculateTotals()" class="table-input price text-right"></td>
                 <td class="px-4 py-0 total-column text-right"><span class="total-item text-xs">0,00</span></td>
                 <td class="px-4 py-0 actions-column text-center text-xs font-medium print:hidden">
                     <button onclick="removeItemById('${itemId}')" class="text-red-600 hover:text-red-900">Eliminar</button>
@@ -503,19 +593,23 @@
             `;
             tbody.appendChild(row);
 
+            // Tarjeta de Celular con Predictivo e Imagen controlada
             const card = document.createElement('div');
             card.id = 'card_' + itemId;
-            card.className = "py-2 px-1 flex items-center justify-between gap-1.5 bg-white text-xs border-b";
+            card.className = "py-2 px-1 flex items-center justify-between gap-1.5 bg-white text-xs border-b relative";
             card.innerHTML = `
                 <button onclick="removeItemById('${itemId}')" class="text-red-500 font-bold px-1 text-sm shrink-0">✕</button>
-                <img src="${photo}" alt="" class="product-thumb w-9 h-9 object-cover rounded shrink-0 border" style="display: ${imgDisplay};">
-                <div class="flex-1 min-w-0">
-                    <textarea rows="1" placeholder="Producto" class="description-textarea w-full p-1 border rounded text-xs bg-gray-50" style="min-height:30px;" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'; syncInputs('${itemId}', 'desc', this.value); calculateTotals()">${description}</textarea>
+                <img src="${photo || ''}" alt="" class="product-thumb w-9 h-9 object-cover rounded shrink-0 border" style="display: ${photo ? 'block' : 'none'};">
+                <div class="flex-1 min-w-0 relative">
+                    <div class="input-wrapper">
+                        <textarea rows="1" placeholder="Producto" class="description-textarea w-full p-1 border rounded text-xs bg-gray-50" autocomplete="off" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'; handleProductInput('${itemId}', this.value)">${description}</textarea>
+                        <div class="suggestions-box"></div>
+                    </div>
                 </div>
                 <div class="flex items-center gap-0.5 shrink-0">
-                    <input type="number" value="${quantity}" min="0" oninput="syncInputs('${itemId}', 'qty', this.value); calculateTotals()" class="w-9 p-1 border rounded text-center quantity font-semibold">
+                    <input type="number" value="${quantity}" min="0" oninput="calculateTotals()" class="w-9 p-1 border rounded text-center quantity font-semibold">
                     <span class="text-gray-400">x</span>
-                    <input type="number" value="${priceForInput}" min="0" step="0.01" oninput="syncInputs('${itemId}', 'price', this.value); calculateTotals()" class="w-14 p-1 border rounded text-right price">
+                    <input type="number" value="${priceForInput}" min="0" step="0.01" oninput="calculateTotals()" class="w-14 p-1 border rounded text-right price">
                 </div>
                 <div class="w-14 text-right shrink-0 text-gray-900 total-item font-medium">0,00</div>
             `;
