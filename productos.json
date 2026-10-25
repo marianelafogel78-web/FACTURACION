@@ -58,14 +58,6 @@
     "suspendido": false
   },
   {
-    "id": 24,
-    "nombre": "FUENTE DE ALIMENTACION 65W TIPOC/USB",
-    "precio": 21000,
-    "foto": "https://i.postimg.cc/QMy31LPP/CAR-59046.jpg",
-    "categoria": "FUENTES DE CARGA/ADAPTADORES",
-    "suspendido": true
-  },
-  {
     "id": 26,
     "nombre": "OTG TIPO C",
     "precio": 650,
@@ -314,14 +306,6 @@
     "foto": "https://i.postimg.cc/rsbfGrrX/SH-60.jpg",
     "categoria": "HERRAMIENTAS",
     "suspendido": false
-  },
-  {
-    "id": 89,
-    "nombre": "TAPON TERMO TIPO STANLEY",
-    "precio": 2100,
-    "foto": "https://i.postimg.cc/qB92s8np/Captura-de-pantalla-2025-09-11-171821.png",
-    "categoria": "TERMOS Y VASOS",
-    "suspendido": true
   },
   {
     "id": 90,
@@ -625,10 +609,11 @@
   {
     "id": 145,
     "nombre": "TENSIOMETRO",
-    "precio": 17600,
+    "precio": 18900,
     "foto": "https://i.postimg.cc/W3P0RZmM/Captura-de-pantalla-2025-09-11-175949.png",
     "categoria": "HOGAR",
-    "suspendido": false
+    "suspendido": false,
+    "fechaIngreso": 1792887205838
   },
   {
     "id": 149,
@@ -674,7 +659,7 @@
   {
     "id": 163,
     "nombre": "LINTERNA 9 LED X 6 UNIDADES",
-    "precio": 7140,
+    "precio": 8150,
     "foto": "https://i.postimg.cc/bvYxss4g/minilinterna.jpg",
     "categoria": "ILUMINACION",
     "suspendido": false,
@@ -742,19 +727,19 @@
   {
     "id": 177,
     "nombre": "LUZ P/BICI X 2PCS BLISTER",
-    "precio": 2050,
+    "precio": 2670,
     "foto": "https://i.postimg.cc/ZYfHfLXq/luz-bici.png",
     "categoria": "ILUMINACION",
-    "suspendido": true,
+    "suspendido": false,
     "fechaIngreso": 1780695189709
   },
   {
     "id": 179,
     "nombre": "TIRA LED 28X35 RGB 5M LED TIME",
-    "precio": 6650,
+    "precio": 6690,
     "foto": "https://i.postimg.cc/XvzxCszX/LED-83108.jpg",
     "categoria": "ILUMINACION",
-    "suspendido": true,
+    "suspendido": false,
     "fechaIngreso": 1785605305925
   },
   {
@@ -1207,7 +1192,7 @@
     "precio": 4620,
     "foto": "https://i.postimg.cc/kgNQtQ45/CX-E02.jpg",
     "categoria": "BALANZAS",
-    "suspendido": true
+    "suspendido": false
   },
   {
     "id": 280,
@@ -1270,18 +1255,20 @@
   {
     "id": 289,
     "nombre": "SOPORTE FIJO TV 26-63 PLG",
-    "precio": 5670,
+    "precio": 5890,
     "foto": "https://i.postimg.cc/dV0dtzQ6/soportetn65pul.jpg",
     "categoria": "SOPORTES TV/CELU",
-    "suspendido": true
+    "suspendido": false,
+    "fechaIngreso": 1792886673148
   },
   {
     "id": 291,
     "nombre": "SOPORTE TV REFORZADO BRAZO 32-65 PLG",
-    "precio": 12600,
+    "precio": 13150,
     "foto": "https://i.postimg.cc/3wMz5Yht/soportetv.jpg",
     "categoria": "SOPORTES TV/CELU",
-    "suspendido": true
+    "suspendido": false,
+    "fechaIngreso": 1792886712588
   },
   {
     "id": 292,
@@ -2049,14 +2036,6 @@
     "suspendido": true
   },
   {
-    "id": 1778884501053,
-    "nombre": "PASAMONTAÑA TERMICO PRIMERA PIEL",
-    "precio": 2500,
-    "foto": "https://i.postimg.cc/zDkryJbW/PM.jpg",
-    "categoria": "INVIERNO",
-    "suspendido": true
-  },
-  {
     "id": 1778884771450,
     "nombre": "CABLE TIPO C 25W MOTOROLA ",
     "precio": 1500,
@@ -2174,7 +2153,7 @@
   {
     "id": 1779320750332,
     "nombre": "LUZ P/BICI RECARGABLE LED",
-    "precio": 1960,
+    "precio": 2100,
     "foto": "https://i.postimg.cc/B685bKNx/BB.jpg",
     "categoria": "ILUMINACION",
     "suspendido": false,
@@ -2283,7 +2262,7 @@
     "precio": 18800,
     "foto": "https://i.postimg.cc/fL7KDDmv/CC.webp",
     "categoria": "AURICULARES VINCHA",
-    "suspendido": true,
+    "suspendido": false,
     "fechaIngreso": 1779991022033
   },
   {
@@ -2294,15 +2273,6 @@
     "categoria": "AURICULARES C/CABLE",
     "suspendido": false,
     "fechaIngreso": 1779991263589
-  },
-  {
-    "id": 1779991370620,
-    "nombre": "AURICULAR SONY 520",
-    "precio": 19990,
-    "foto": "https://i.postimg.cc/5N8Frn5B/CC.webp",
-    "categoria": "AURICULARES VINCHA",
-    "suspendido": true,
-    "fechaIngreso": 1779991370620
   },
   {
     "id": 1779991682258,
@@ -2463,7 +2433,7 @@
     "precio": 9940,
     "foto": "https://i.postimg.cc/fbbnCQYx/zz.jpg",
     "categoria": "COCINA",
-    "suspendido": false,
+    "suspendido": true,
     "fechaIngreso": 1780696281925
   },
   {
@@ -2661,7 +2631,7 @@
     "precio": 7200,
     "foto": "https://i.postimg.cc/tTKNYfFY/AS-228.jpg",
     "categoria": "ORDEN Y LIMPIEZA",
-    "suspendido": true,
+    "suspendido": false,
     "fechaIngreso": 1782859300906
   },
   {
@@ -3106,15 +3076,6 @@
     "fechaIngreso": 1785371938751
   },
   {
-    "id": 1785372059575,
-    "nombre": "KIT ASADOR ACERO",
-    "precio": 13860,
-    "foto": "https://i.postimg.cc/Zq6y0CMq/HOG0653A.jpg",
-    "categoria": "HOGAR",
-    "suspendido": true,
-    "fechaIngreso": 1785372059575
-  },
-  {
     "id": 1785372135950,
     "nombre": "SET MANICURA 7 PCS",
     "precio": 5900,
@@ -3345,7 +3306,7 @@
     "precio": 15700,
     "foto": "https://i.postimg.cc/FR27QnB2/PE.jpg",
     "categoria": "COCINA",
-    "suspendido": true,
+    "suspendido": false,
     "fechaIngreso": 1786283527828
   },
   {
@@ -3354,7 +3315,7 @@
     "precio": 6300,
     "foto": "https://i.postimg.cc/NFpR1qsx/aau.jpg",
     "categoria": "AURICULARES VINCHA",
-    "suspendido": true,
+    "suspendido": false,
     "fechaIngreso": 1786401346138
   },
   {
@@ -3408,7 +3369,7 @@
     "precio": 5199,
     "foto": "https://i.postimg.cc/prNYhFLh/MELECH-688.jpg",
     "categoria": "HOGAR",
-    "suspendido": true,
+    "suspendido": false,
     "fechaIngreso": 1787318601229
   },
   {
@@ -3489,7 +3450,7 @@
     "precio": 15050,
     "foto": "https://i.postimg.cc/BZT48fhG/RH-11-15.jpg",
     "categoria": "TERMOS Y VASOS",
-    "suspendido": true,
+    "suspendido": false,
     "fechaIngreso": 1787319586078
   },
   {
@@ -3570,7 +3531,7 @@
     "precio": 910,
     "foto": "https://i.postimg.cc/DZ4kCCpD/LLL.jpg",
     "categoria": "ILUMINACION",
-    "suspendido": false,
+    "suspendido": true,
     "fechaIngreso": 1787855829406
   },
   {
@@ -4070,11 +4031,11 @@
   },
   {
     "id": 1791563659046,
-    "nombre": "TERMO 750ML ACERO CON PICO CEBADOR",
-    "precio": 18900,
+    "nombre": "MATERMO 500ML ACERO CON PICO CEBADOR",
+    "precio": 15540,
     "foto": "https://i.postimg.cc/bvWZDj9L/aa.jpg",
     "categoria": "TERMOS Y VASOS",
-    "suspendido": true,
+    "suspendido": false,
     "fechaIngreso": 1791563659046
   },
   {
@@ -4119,7 +4080,7 @@
     "precio": 45000,
     "foto": "https://i.postimg.cc/CK8YVySh/pp.jpg",
     "categoria": "VARIOS",
-    "suspendido": false,
+    "suspendido": true,
     "fechaIngreso": 1792094140527
   },
   {
@@ -4238,5 +4199,68 @@
     "categoria": "ILUMINACION",
     "suspendido": false,
     "fechaIngreso": 1792192991154
+  },
+  {
+    "id": 1792884635233,
+    "nombre": "CABLE TIPO C ENGOMADO 120W 6A",
+    "precio": 1380,
+    "foto": "https://i.postimg.cc/3RtdmBnf/mmjpg.jpg",
+    "categoria": "CABLES",
+    "suspendido": false,
+    "fechaIngreso": 1792884635234
+  },
+  {
+    "id": 1792884757639,
+    "nombre": "MICROFONO CON CABLE",
+    "precio": 4680,
+    "foto": "https://i.postimg.cc/MHcKR8cV/mm.jpg",
+    "categoria": "PARLANTES Y MICROFONOS",
+    "suspendido": false,
+    "fechaIngreso": 1792884757639
+  },
+  {
+    "id": 1792885196819,
+    "nombre": "TERMO PLASTICO 2 LITROS",
+    "precio": 6600,
+    "foto": "https://i.postimg.cc/K8QzdQyb/mm.png",
+    "categoria": "HOGAR",
+    "suspendido": false,
+    "fechaIngreso": 1792885196819
+  },
+  {
+    "id": 1792885519228,
+    "nombre": "MATE PVC",
+    "precio": 10020,
+    "foto": "https://i.postimg.cc/Dy6nZZpg/mm.webp",
+    "categoria": "TERMOS Y VASOS",
+    "suspendido": false,
+    "fechaIngreso": 1792885519229
+  },
+  {
+    "id": 1792885742733,
+    "nombre": "TIMBRE INALAMBRICO",
+    "precio": 7950,
+    "foto": "https://i.postimg.cc/0NJTp2nT/mm.webp",
+    "categoria": "HOGAR",
+    "suspendido": false,
+    "fechaIngreso": 1792885742733
+  },
+  {
+    "id": 1792886015355,
+    "nombre": "AURICULAR VINCHA ROYALCELL  RP-G62",
+    "precio": 16800,
+    "foto": "https://i.postimg.cc/d3QNSqRr/MM.jpg",
+    "categoria": "AURICULARES VINCHA",
+    "suspendido": false,
+    "fechaIngreso": 1792886015355
+  },
+  {
+    "id": 1792886139969,
+    "nombre": "AURICULAR VINCHA ROYALCELL RP-G61",
+    "precio": 16800,
+    "foto": "https://i.postimg.cc/d3QNSqRr/MM.jpg",
+    "categoria": "AURICULARES VINCHA",
+    "suspendido": false,
+    "fechaIngreso": 1792886139969
   }
 ]
