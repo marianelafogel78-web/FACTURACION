@@ -324,14 +324,6 @@
     "suspendido": false
   },
   {
-    "id": 92,
-    "nombre": "TIMBRE INALAMBRICO",
-    "precio": 9650,
-    "foto": "https://i.postimg.cc/x8pQmKtH/Captura-de-pantalla-2025-09-11-175409.png",
-    "categoria": "HOGAR",
-    "suspendido": true
-  },
-  {
     "id": 93,
     "nombre": "AURICULAR M10",
     "precio": 6550,
@@ -618,10 +610,11 @@
   {
     "id": 149,
     "nombre": "PARAGUAS DISEÑO INFANTIL",
-    "precio": 4385,
-    "foto": "https://i.postimg.cc/y86ksZZT/B-505.jpg",
+    "precio": 4760,
+    "foto": "https://i.postimg.cc/h4rbdkg7/aa999.jpg",
     "categoria": "NIÑOS",
-    "suspendido": false
+    "suspendido": false,
+    "fechaIngreso": 1793464203484
   },
   {
     "id": 150,
@@ -1217,7 +1210,7 @@
     "precio": 1345,
     "foto": "https://i.postimg.cc/KYxWzPsm/aurirb.jpg",
     "categoria": "AURICULARES C/CABLE",
-    "suspendido": false
+    "suspendido": true
   },
   {
     "id": 285,
@@ -1620,7 +1613,7 @@
     "precio": 6820,
     "foto": "https://i.postimg.cc/pdhBg9Bc/linga.jpg",
     "categoria": "HERRAMIENTAS",
-    "suspendido": false
+    "suspendido": true
   },
   {
     "id": 1776197680330,
@@ -1885,7 +1878,7 @@
     "precio": 1323,
     "foto": "https://i.postimg.cc/jSfpy6mQ/AUR.jpg",
     "categoria": "AURICULARES C/CABLE",
-    "suspendido": false
+    "suspendido": true
   },
   {
     "id": 1777737286896,
@@ -2271,7 +2264,7 @@
     "precio": 1480,
     "foto": "https://i.postimg.cc/WbqdkSfj/CC.jpg",
     "categoria": "AURICULARES C/CABLE",
-    "suspendido": false,
+    "suspendido": true,
     "fechaIngreso": 1779991263589
   },
   {
@@ -2433,7 +2426,7 @@
     "precio": 9940,
     "foto": "https://i.postimg.cc/fbbnCQYx/zz.jpg",
     "categoria": "COCINA",
-    "suspendido": true,
+    "suspendido": false,
     "fechaIngreso": 1780696281925
   },
   {
@@ -2667,7 +2660,7 @@
     "precio": 9185,
     "foto": "https://i.postimg.cc/k4Tfpzvr/ZT.jpg",
     "categoria": "HOGAR",
-    "suspendido": false,
+    "suspendido": true,
     "fechaIngreso": 1783014378214
   },
   {
@@ -3000,7 +2993,7 @@
     "precio": 1300,
     "foto": "https://i.postimg.cc/yNKzLKwp/pp23.jpg",
     "categoria": "ILUMINACION",
-    "suspendido": false,
+    "suspendido": true,
     "fechaIngreso": 1785371406374
   },
   {
@@ -3011,15 +3004,6 @@
     "categoria": "HERRAMIENTAS",
     "suspendido": false,
     "fechaIngreso": 1785371494879
-  },
-  {
-    "id": 1785371540599,
-    "nombre": "MARCADOR BRILLO 12PCS 24 COLOR",
-    "precio": 4900,
-    "foto": "https://i.postimg.cc/ncWVJ3Mt/KM-61281.jpg",
-    "categoria": "LIBRERIA",
-    "suspendido": true,
-    "fechaIngreso": 1785371540599
   },
   {
     "id": 1785371633367,
@@ -3675,7 +3659,7 @@
     "precio": 6370,
     "foto": "https://i.postimg.cc/43jF0xWV/FG915.jpg",
     "categoria": "COCINA",
-    "suspendido": false,
+    "suspendido": true,
     "fechaIngreso": 1788464326402
   },
   {
@@ -4075,15 +4059,6 @@
     "fechaIngreso": 1792093856002
   },
   {
-    "id": 1792094140527,
-    "nombre": "ARBOL DE NAVIDAD 50CM C/LED MULTICOLOR ",
-    "precio": 45000,
-    "foto": "https://i.postimg.cc/CK8YVySh/pp.jpg",
-    "categoria": "VARIOS",
-    "suspendido": true,
-    "fechaIngreso": 1792094140527
-  },
-  {
     "id": 1792094368741,
     "nombre": "CESTA ORGANIZADOR ",
     "precio": 6525,
@@ -4143,7 +4118,7 @@
     "precio": 12900,
     "foto": "https://i.postimg.cc/SRpxsNjF/a4.jpg",
     "categoria": "TERMOS Y VASOS",
-    "suspendido": false,
+    "suspendido": true,
     "fechaIngreso": 1792190769158
   },
   {
@@ -4262,5 +4237,95 @@
     "categoria": "AURICULARES VINCHA",
     "suspendido": false,
     "fechaIngreso": 1792886139969
+  },
+  {
+    "id": 1793463460686,
+    "nombre": "AURICULAR TIME BOLSA ",
+    "precio": 1300,
+    "foto": "https://i.postimg.cc/J0d68vz1/aa1.jpg",
+    "categoria": "AURICULARES C/CABLE",
+    "suspendido": false,
+    "fechaIngreso": 1793463460686
+  },
+  {
+    "id": 1793463555938,
+    "nombre": "RIZADOR DE CABELLO BARRIL CERAMICO 19MM",
+    "precio": 13750,
+    "foto": "https://i.postimg.cc/nMbmqGdq/aa2.jpg",
+    "categoria": "ACCESORIOS P/ BELLEZA",
+    "suspendido": false,
+    "fechaIngreso": 1793463555938
+  },
+  {
+    "id": 1793463633985,
+    "nombre": "SET DE 3PCS. BROCA ESCALONADA",
+    "precio": 7950,
+    "foto": "https://i.postimg.cc/bJSHbrz7/aa3.jpg",
+    "categoria": "HERRAMIENTAS",
+    "suspendido": false,
+    "fechaIngreso": 1793463633985
+  },
+  {
+    "id": 1793463740752,
+    "nombre": "CUCHILLO CON LIMA HUIHANG",
+    "precio": 6790,
+    "foto": "https://i.postimg.cc/JnjHMk7J/aa4.jpg",
+    "categoria": "COCINA",
+    "suspendido": false,
+    "fechaIngreso": 1793463740752
+  },
+  {
+    "id": 1793463931854,
+    "nombre": "PUNTERO LASER VERD EN BLISTER",
+    "precio": 5370,
+    "foto": "https://i.postimg.cc/pr7wCp8f/aa6.jpg",
+    "categoria": "ILUMINACION",
+    "suspendido": false,
+    "fechaIngreso": 1793463931854
+  },
+  {
+    "id": 1793464038893,
+    "nombre": "PARLANTE BT C/LUZ CHICO 3PLG GTS-1360",
+    "precio": 7400,
+    "foto": "https://i.postimg.cc/259Nyc62/aa9.jpg",
+    "categoria": "PARLANTES Y MICROFONOS",
+    "suspendido": false,
+    "fechaIngreso": 1793464038893
+  },
+  {
+    "id": 1793464099645,
+    "nombre": "PELOTA SPINER ",
+    "precio": 4480,
+    "foto": "https://i.postimg.cc/HsdvG0W8/aa99.jpg",
+    "categoria": "NIÑOS",
+    "suspendido": false,
+    "fechaIngreso": 1793464099645
+  },
+  {
+    "id": 1793464310443,
+    "nombre": "CABLE 3 A 3 ",
+    "precio": 2100,
+    "foto": "https://i.postimg.cc/vHxTsnPm/ab1.webp",
+    "categoria": "CABLES",
+    "suspendido": false,
+    "fechaIngreso": 1793464310443
+  },
+  {
+    "id": 1793464385554,
+    "nombre": "CARGADOR DE AUTO 55W PD",
+    "precio": 4380,
+    "foto": "https://i.postimg.cc/gk3whR3N/ab2.jpg",
+    "categoria": "CARGADORES",
+    "suspendido": false,
+    "fechaIngreso": 1793464385554
+  },
+  {
+    "id": 1793464521449,
+    "nombre": "COMPRESOR A ENCENDEDOR AUTO",
+    "precio": 16390,
+    "foto": "https://i.postimg.cc/HW9D7kVk/ab4.jpg",
+    "categoria": "CARGADORES",
+    "suspendido": false,
+    "fechaIngreso": 1793464521449
   }
 ]
